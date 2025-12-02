@@ -11,12 +11,13 @@ import (
 
 func runSendCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Message.Send
+	logger := slog.With("queue_name", c.Message.QueueName)
 
 	client, err := simplemq.NewMessageClient(c.Message.APIKey)
 	if err != nil {
 		return fmt.Errorf("failed to create message client: %w", err)
 	}
-	messageOp := simplemq.NewMessageOp(client, c.QueueName)
+	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
 
 	var content string
 	if c.Message.Base64 {
@@ -24,11 +25,11 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 	} else {
 		content = cmd.Content
 	}
-	slog.Info("sending message", "queue", c.QueueName, "content", content)
+	logger.Debug("sending message", "content", content)
 	_, err = messageOp.Send(ctx, content)
 	if err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
-	slog.Info("message sent successfully")
+	logger.Debug("message sent successfully")
 	return nil
 }

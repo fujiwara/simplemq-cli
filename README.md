@@ -12,27 +12,39 @@ Or download from [Releases](https://github.com/fujiwara/simplemq-cli/releases).
 
 ## Usage
 
-```bash
-simplemq-cli --queue-name <queue-name> message [options] <command>
+```
+Usage: simplemq-cli <command> [flags]
+
+Flags:
+  -h, --help       Show context-sensitive help.
+  -v, --version    Show version and exit.
+      --debug      Enable debug mode ($SIMPLEMQ_DEBUG).
+
+Commands:
+  message send --queue-name=STRING --api-key=STRING <content> [flags]
+    Send message to queue
+
+  message receive --queue-name=STRING --api-key=STRING [flags]
+    Receive message from queue
 ```
 
 ### Send a message
 
 ```bash
-simplemq-cli --queue-name myqueue message --api-key <api-key> --base64 send "Hello, World!"
+simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 send "Hello, World!"
 ```
 
 ### Receive messages
 
 ```bash
 # Receive a single message
-simplemq-cli --queue-name myqueue message --api-key <api-key> --base64 receive
+simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive
 
 # Receive with polling (wait for messages)
-simplemq-cli --queue-name myqueue message --api-key <api-key> --base64 receive --polling --count 10
+simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive --polling --count 10
 
 # Auto-delete messages after receiving
-simplemq-cli --queue-name myqueue message --api-key <api-key> --base64 receive --auto-delete
+simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive --auto-delete
 ```
 
 **Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. Use `--base64` flag to automatically encode/decode message content.

@@ -1,16 +1,22 @@
 package cli
 
-import "time"
+import (
+	"time"
+
+	"github.com/alecthomas/kong"
+)
 
 type CLI struct {
-	QueueName string `help:"Queue name" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
+	Version kong.VersionFlag `short:"v" help:"Show version and exit."`
+	Debug   bool             `help:"Enable debug mode." env:"SIMPLEMQ_DEBUG" default:"false"`
 
 	Message *MessageCommand `cmd:"" help:"Message related commands"`
 }
 
 type MessageCommand struct {
-	APIKey string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
-	Base64 bool   `name:"base64" help:"Use Base64 encoding for message content" default:"false" env:"SIMPLEMQ_BASE64"`
+	QueueName string `help:"Queue name" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
+	APIKey    string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
+	Base64    bool   `name:"base64" help:"Use Base64 encoding for message content" default:"false" env:"SIMPLEMQ_BASE64"`
 
 	Send    *SendCommand    `cmd:"" help:"Send message to queue"`
 	Receive *ReceiveCommand `cmd:"" help:"Receive message from queue"`

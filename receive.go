@@ -13,22 +13,24 @@ import (
 )
 
 func runReceiveCommand(ctx context.Context, c *CLI) error {
+	logger := slog.With("queue_name", c.Message.QueueName)
+
+	cmd := c.Message.Receive
 	client, err := simplemq.NewMessageClient(c.Message.APIKey)
 	if err != nil {
 		return fmt.Errorf("failed to create message client: %w", err)
 	}
-	messageOp := simplemq.NewMessageOp(client, c.QueueName)
-	slog.Info("receiving message", "queue", c.QueueName)
+	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
+	logger.Debug("receiving message", "queue", c.Message.QueueName)
 
 	count := 0
-	cmd := c.Message.Receive
 	receive := func() error {
 		msgs, err := messageOp.Receive(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to receive message: %w", err)
 		}
 		for _, msg := range msgs {
-			slog.Info("received message", "message", msg)
+			logger.Debug("received message", "message", msg)
 			m := convertMessageContent(msg, c.Message.Base64)
 			b, err := json.Marshal(m)
 			if err != nil {
@@ -36,7 +38,7 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 			}
 			fmt.Println(string(b))
 			if cmd.AutoDelete {
-				slog.Info("deleting message", "messageID", msg.ID)
+				logger.Debug("deleting message", "messageID", msg.ID)
 				if err := messageOp.Delete(ctx, string(msg.ID)); err != nil {
 					return fmt.Errorf("failed to delete message: %w", err)
 				}
@@ -50,6 +52,11 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 	}
 
 	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 		if err := receive(); err != nil {
 			return err
 		}
@@ -59,7 +66,7 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 		if count >= cmd.Count {
 			return nil
 		}
-		slog.Info("sleeping before next polling", "interval", cmd.Interval)
+		logger.Debug("sleeping before next polling", "interval", cmd.Interval)
 		sleepWithContext(ctx, cmd.Interval)
 	}
 	return nil
