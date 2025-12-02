@@ -1,6 +1,6 @@
 # simplemq-cli
 
-A CLI tool for [SAKURA Cloud SimpleMQ](https://manual.sakura.ad.jp/cloud/manual-simplemq.html) service.
+A CLI tool for [SAKURA Cloud SimpleMQ](https://manual.sakura.ad.jp/cloud/appliance/simplemq/index.html) service.
 
 ## Installation
 
