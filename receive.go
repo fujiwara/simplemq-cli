@@ -31,12 +31,21 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 		}
 		for _, msg := range msgs {
 			logger.Debug("received message", "message", msg)
-			m := convertMessageContent(msg, c.Message.Base64)
-			b, err := json.Marshal(m)
-			if err != nil {
-				return fmt.Errorf("failed to marshal message: %w", err)
+			var b []byte
+			if cmd.Raw {
+				b, err = json.Marshal(msg)
+				if err != nil {
+					return fmt.Errorf("failed to marshal raw message: %w", err)
+				}
+			} else {
+				m := convertMessageContent(msg, c.Message.Base64)
+				b, err = json.Marshal(m)
+				if err != nil {
+					return fmt.Errorf("failed to marshal message: %w", err)
+				}
 			}
 			fmt.Println(string(b))
+
 			if cmd.AutoDelete {
 				logger.Debug("deleting message", "messageID", msg.ID)
 				if err := messageOp.Delete(ctx, string(msg.ID)); err != nil {

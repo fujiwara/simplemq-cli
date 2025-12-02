@@ -31,4 +31,5 @@ type ReceiveCommand struct {
 	Count      int           `help:"Number of messages to receive" default:"1" env:"SIMPLEMQ_RECEIVE_COUNT"`
 	AutoDelete bool          `help:"Automatically delete messages after receiving" default:"false" env:"SIMPLEMQ_AUTO_DELETE"`
 	Interval   time.Duration `help:"Polling interval for receiving message" default:"1s" env:"SIMPLEMQ_POLLING_INTERVAL"`
+	Raw        bool          `help:"Output raw message without pretty print" default:"false" env:"SIMPLEMQ_RAW_OUTPUT"`
 }

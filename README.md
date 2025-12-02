@@ -38,6 +38,7 @@ simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 send "Hel
 
 ```bash
 # Receive a single message
+# Do not delete the message after receiving
 simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive
 
 # Receive with polling (wait for messages)
@@ -64,6 +65,11 @@ For example:
 }
 ```
 
+If `--raw` flag is specified, the raw message from SimpleMQ API is output without pretty print.
+```json
+{"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
+```
+
 ## Options
 
 ### Global Options
@@ -79,6 +85,10 @@ For example:
 | `--api-key` | `SIMPLEMQ_API_KEY` | API Key (required) |
 | `--base64` | `SIMPLEMQ_BASE64` | Use Base64 encoding for message content (default: false) |
 
+### Send Options
+
+No additional options for sending messages.
+
 ### Receive Options
 
 | Option | Environment Variable | Default | Description |
@@ -87,6 +97,7 @@ For example:
 | `--count` | `SIMPLEMQ_RECEIVE_COUNT` | 1 | Number of messages to receive |
 | `--auto-delete` | `SIMPLEMQ_AUTO_DELETE` | false | Automatically delete messages after receiving |
 | `--interval` | `SIMPLEMQ_POLLING_INTERVAL` | 1s | Polling interval |
+| `--raw` | `SIMPLEMQ_RAW_OUTPUT` | false | Output raw message without pretty print |
 
 ## License
 
