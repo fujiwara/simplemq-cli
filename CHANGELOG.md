@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.1.0](https://github.com/fujiwara/simplemq-cli/compare/v0.0.4...v0.1.0) - 2025-12-03
+- send - accepts from stdin by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/9
+- Add queue management commands by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/11
+- add confirmation for queue rotate-api-key command by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/12
+
 ## [v0.0.4](https://github.com/fujiwara/simplemq-cli/compare/v0.0.3...v0.0.4) - 2025-12-03
 - fix receive --count by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/7
 
