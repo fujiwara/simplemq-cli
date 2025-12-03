@@ -27,10 +27,10 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 		content = base64.StdEncoding.EncodeToString([]byte(cmd.Content))
 	}
 	logger.Debug("sending message", "content", content)
-	_, err = messageOp.Send(ctx, content)
+	res, err := messageOp.Send(ctx, content)
 	if err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
-	logger.Debug("message sent successfully")
+	logger.Debug("message sent successfully", "messageID", res.ID)
 	return nil
 }
