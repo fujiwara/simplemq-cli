@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -11,6 +12,14 @@ import (
 	simplemq "github.com/sacloud/simplemq-api-go"
 	"github.com/sacloud/simplemq-api-go/apis/v1/message"
 )
+
+type ErrNotFound struct {
+	Message string
+}
+
+func (e ErrNotFound) Error() string {
+	return e.Message
+}
 
 func runReceiveCommand(ctx context.Context, c *CLI) error {
 	logger := slog.With("queue_name", c.Message.QueueName)
@@ -22,13 +31,17 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to create message client: %w", err)
 	}
 	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
-	logger.Debug("receiving message", "queue", c.Message.QueueName)
+	logger.Debug("receiving message")
 
 	count := 0
 	receive := func() error {
 		msgs, err := messageOp.Receive(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to receive message: %w", err)
+			return	fmt.Errorf("failed to receive message: %w", err)
+		}
+		if len(msgs) == 0 {
+			logger.Debug("no messages received")
+			return ErrNotFound{Message: "no messages found"}
 		}
 		for _, msg := range msgs {
 			logger.Debug("received message", "message", msg)
@@ -61,23 +74,34 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 		return nil
 	}
 
+RECEIVE:
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
 		}
-		if err := receive(); err != nil {
-			return err
-		}
-		if !cmd.Polling {
-			break
+		err := receive()
+		if err != nil {
+			var e ErrNotFound
+			if errors.As(err, &e) {
+				if cmd.Polling {
+					// continue polling
+					logger.Debug("no messages found, continuing polling")
+					logger.Debug("sleeping before next polling", "interval", cmd.Interval)
+					sleepWithContext(ctx, cmd.Interval)
+					continue RECEIVE
+				} else {
+					// not found and not polling, exit
+					return nil
+				}
+			} else {
+				return err
+			}
 		}
 		if count >= cmd.Count {
-			return nil
+			break RECEIVE
 		}
-		logger.Debug("sleeping before next polling", "interval", cmd.Interval)
-		sleepWithContext(ctx, cmd.Interval)
 	}
 	return nil
 }
