@@ -29,6 +29,30 @@ Commands:
 
   message delete --queue-name=STRING --api-key=STRING <message-id> [flags]
     Delete message from queue
+
+  queue create --queue-name=STRING [flags]
+    Create a new queue
+
+  queue list [flags]
+    List queues
+
+  queue get --queue-name=STRING [flags]
+    Get queue details
+
+  queue modify --queue-name=STRING [flags]
+    Modify queue settings
+
+  queue delete --queue-name=STRING [flags]
+    Delete a queue
+
+  queue message-count --queue-name=STRING [flags]
+    Get message count in a queue
+
+  queue rotate-api-key --queue-name=STRING [flags]
+    Rotate API key for a queue
+
+  queue purge --queue-name=STRING [flags]
+    Purge all messages in a queue
 ```
 
 ### Send a message
@@ -55,6 +79,67 @@ simplemq-cli message receive --queue-name myqueue --api-key <api-key> --auto-del
 
 ```bash
 simplemq-cli message delete --queue-name myqueue --api-key <api-key> <message-id>
+```
+
+### Queue Management
+
+Queue management commands require `SAKURACLOUD_ACCESS_TOKEN` and `SAKURACLOUD_ACCESS_TOKEN_SECRET` environment variables for authentication.
+
+#### Create a queue
+
+```bash
+simplemq-cli queue create --queue-name myqueue --description "My queue description"
+```
+
+#### List queues
+
+```bash
+simplemq-cli queue list
+```
+
+#### Get queue details
+
+```bash
+simplemq-cli queue get --queue-name myqueue
+```
+
+#### Modify queue settings
+
+```bash
+# Modify visibility timeout and message expiration time
+simplemq-cli queue modify --queue-name myqueue --visibility-timeout-seconds 60 --expire-seconds 86400
+```
+
+#### Delete a queue
+
+```bash
+# Delete with confirmation prompt
+simplemq-cli queue delete --queue-name myqueue
+
+# Delete without confirmation
+simplemq-cli queue delete --queue-name myqueue -f
+```
+
+#### Get message count
+
+```bash
+simplemq-cli queue message-count --queue-name myqueue
+```
+
+#### Rotate API key
+
+```bash
+simplemq-cli queue rotate-api-key --queue-name myqueue
+```
+
+#### Purge all messages
+
+```bash
+# Purge with confirmation prompt
+simplemq-cli queue purge --queue-name myqueue
+
+# Purge without confirmation
+simplemq-cli queue purge --queue-name myqueue -f
 ```
 
 **Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. By default, this CLI automatically encodes/decodes message content using Base64. Use `--raw` flag to disable this behavior.
@@ -105,6 +190,38 @@ No additional options for sending messages.
 ### Delete Options
 
 No additional options for deleting messages.
+
+### Queue Options
+
+Queue commands require the following environment variables for authentication:
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `SAKURACLOUD_ACCESS_TOKEN` | Access token for queue management (required) |
+| `SAKURACLOUD_ACCESS_TOKEN_SECRET` | Access token secret for queue management (required) |
+
+| Option | Environment Variable | Description |
+|--------|---------------------|-------------|
+| `--queue-name`, `-q` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required for most commands) |
+
+### Queue Create Options
+
+| Option | Description |
+|--------|-------------|
+| `--description` | Description of the queue |
+
+### Queue Modify Options
+
+| Option | Description |
+|--------|-------------|
+| `--visibility-timeout-seconds` | Visibility timeout in seconds |
+| `--expire-seconds` | Message expiration time in seconds |
+
+### Queue Delete / Purge Options
+
+| Option | Environment Variable | Default | Description |
+|--------|---------------------|---------|-------------|
+| `-f`, `--force` | `SIMPLEMQ_FORCE` | false | Force operation without confirmation prompt |
 
 ## License
 
