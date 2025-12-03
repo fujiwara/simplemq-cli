@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/Songmu/prompter"
 	simplemq "github.com/sacloud/simplemq-api-go"
 )
 
 type RotateAPIKeyCommand struct {
 	QueueCommandBase
+	ConfirmationCommandBase
 }
 
 func runRotateQueueAPIKeyCommand(ctx context.Context, c *CLI) error {
@@ -25,6 +27,13 @@ func runRotateQueueAPIKeyCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to get queue details: %w", err)
 	}
 	logger.Debug("queue details retrieved successfully", "queue", queue)
+
+	if !cmd.Force {
+		if !prompter.YesNo(fmt.Sprintf("Are you sure you want to rotate the API key for the queue '%s'?", cmd.QueueName), false) {
+			logger.Info("rotate API key operation cancelled by user")
+			return nil
+		}
+	}
 
 	queueOp := simplemq.NewQueueOp(client)
 	logger.Debug("rotating API key for queue")
