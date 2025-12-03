@@ -21,7 +21,14 @@ func (e ErrNotFound) Error() string {
 	return e.Message
 }
 
-func runReceiveCommand(ctx context.Context, c *CLI) error {
+type ReceiveMessageCommand struct {
+	Polling    bool          `help:"Enable polling to receive message" default:"false" env:"SIMPLEMQ_POLLING"`
+	Count      int           `help:"Number of messages to receive" default:"1" env:"SIMPLEMQ_RECEIVE_COUNT"`
+	AutoDelete bool          `help:"Automatically delete messages after receiving" default:"false" env:"SIMPLEMQ_AUTO_DELETE"`
+	Interval   time.Duration `help:"Polling interval for receiving message" default:"1s" env:"SIMPLEMQ_POLLING_INTERVAL"`
+}
+
+func runReceiveMessageCommand(ctx context.Context, c *CLI) error {
 	logger := slog.With("queue_name", c.Message.QueueName)
 
 	cmd := c.Message.Receive
@@ -37,7 +44,7 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 	receive := func() error {
 		msgs, err := messageOp.Receive(ctx)
 		if err != nil {
-			return	fmt.Errorf("failed to receive message: %w", err)
+			return fmt.Errorf("failed to receive message: %w", err)
 		}
 		if len(msgs) == 0 {
 			logger.Debug("no messages received")
