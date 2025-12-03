@@ -28,6 +28,8 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 		if err != nil {
 			return fmt.Errorf("failed to read from stdin: %w", err)
 		}
+	} else {
+		rawContent = []byte(cmd.Content)
 	}
 	var content string
 	if c.Message.Raw {
