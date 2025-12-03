@@ -26,12 +26,15 @@ Commands:
 
   message receive --queue-name=STRING --api-key=STRING [flags]
     Receive message from queue
+
+  message delete --queue-name=STRING --api-key=STRING <message-id> [flags]
+    Delete message from queue
 ```
 
 ### Send a message
 
 ```bash
-simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 send "Hello, World!"
+simplemq-cli message send --queue-name myqueue --api-key <api-key> "Hello, World!"
 ```
 
 ### Receive messages
@@ -39,16 +42,22 @@ simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 send "Hel
 ```bash
 # Receive a single message
 # Do not delete the message after receiving
-simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive
+simplemq-cli message receive --queue-name myqueue --api-key <api-key>
 
 # Receive with polling (wait for messages)
-simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive --polling --count 10
+simplemq-cli message receive --queue-name myqueue --api-key <api-key> --polling --count 10
 
 # Auto-delete messages after receiving
-simplemq-cli message --queue-name myqueue --api-key <api-key> --base64 receive --auto-delete
+simplemq-cli message receive --queue-name myqueue --api-key <api-key> --auto-delete
 ```
 
-**Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. Use `--base64` flag to automatically encode/decode message content.
+### Delete a message
+
+```bash
+simplemq-cli message delete --queue-name myqueue --api-key <api-key> <message-id>
+```
+
+**Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. By default, this CLI automatically encodes/decodes message content using Base64. Use `--raw` flag to disable this behavior.
 
 Received messages are output as JSON to stdout.
 
@@ -65,25 +74,20 @@ For example:
 }
 ```
 
-If `--raw` flag is specified, the raw message from SimpleMQ API is output without pretty print.
+If `--raw` flag is specified, the raw message from SimpleMQ API is output without Base64 decoding and time conversion.
 ```json
 {"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
 ```
 
 ## Options
 
-### Global Options
-
-| Option | Environment Variable | Description |
-|--------|---------------------|-------------|
-| `--queue-name` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required) |
-
 ### Message Options
 
 | Option | Environment Variable | Description |
 |--------|---------------------|-------------|
+| `--queue-name` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required) |
 | `--api-key` | `SIMPLEMQ_API_KEY` | API Key (required) |
-| `--base64` | `SIMPLEMQ_BASE64` | Use Base64 encoding for message content (default: false) |
+| `--raw` | `SIMPLEMQ_RAW` | Handle raw message without Base64 encoding/decoding (default: false) |
 
 ### Send Options
 
@@ -97,7 +101,10 @@ No additional options for sending messages.
 | `--count` | `SIMPLEMQ_RECEIVE_COUNT` | 1 | Number of messages to receive |
 | `--auto-delete` | `SIMPLEMQ_AUTO_DELETE` | false | Automatically delete messages after receiving |
 | `--interval` | `SIMPLEMQ_POLLING_INTERVAL` | 1s | Polling interval |
-| `--raw` | `SIMPLEMQ_RAW_OUTPUT` | false | Output raw message without pretty print |
+
+### Delete Options
+
+No additional options for deleting messages.
 
 ## License
 

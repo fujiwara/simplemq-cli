@@ -31,6 +31,8 @@ func Run(ctx context.Context) error {
 		return runSendCommand(ctx, &c)
 	case "message receive":
 		return runReceiveCommand(ctx, &c)
+	case "message delete <message-id>":
+		return runDeleteCommand(ctx, &c)
 	default:
 		return fmt.Errorf("unknown command: %s", kx.Command())
 	}
