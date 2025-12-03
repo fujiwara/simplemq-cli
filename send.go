@@ -12,7 +12,11 @@ import (
 	simplemq "github.com/sacloud/simplemq-api-go"
 )
 
-func runSendCommand(ctx context.Context, c *CLI) error {
+type SendMessageCommand struct {
+	Content string `arg:"" help:"Content of the message to send. if - read from stdin" name:"content"`
+}
+
+func runSendMessageCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Message.Send
 	logger := slog.With("queue_name", c.Message.QueueName)
 

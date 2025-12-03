@@ -28,11 +28,27 @@ func Run(ctx context.Context) error {
 
 	switch kx.Command() {
 	case "message send <content>":
-		return runSendCommand(ctx, &c)
+		return runSendMessageCommand(ctx, &c)
 	case "message receive":
-		return runReceiveCommand(ctx, &c)
+		return runReceiveMessageCommand(ctx, &c)
 	case "message delete <message-id>":
-		return runDeleteCommand(ctx, &c)
+		return runDeleteMessageCommand(ctx, &c)
+	case "queue create":
+		return runCreateQueueCommand(ctx, &c)
+	case "queue get":
+		return runGetQueueCommand(ctx, &c)
+	case "queue list":
+		return runListQueueCommand(ctx, &c)
+	case "queue modify":
+		return runModifyQueueCommand(ctx, &c)
+	case "queue delete":
+		return runDeleteQueueCommand(ctx, &c)
+	case "queue purge":
+		return runPurgeQueueCommand(ctx, &c)
+	case "queue rotate-api-key":
+		return runRotateQueueAPIKeyCommand(ctx, &c)
+	case "queue message-count":
+		return runMessageCountCommand(ctx, &c)
 	default:
 		return fmt.Errorf("unknown command: %s", kx.Command())
 	}

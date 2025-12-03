@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"time"
-
 	"github.com/alecthomas/kong"
 )
 
@@ -11,29 +9,35 @@ type CLI struct {
 	Debug   bool             `help:"Enable debug mode." env:"SIMPLEMQ_DEBUG" default:"false"`
 
 	Message *MessageCommand `cmd:"" help:"Message related commands"`
+	Queue   *QueueCommand   `cmd:"" help:"Queue related commands"`
 }
 
 type MessageCommand struct {
-	QueueName string `help:"Queue name" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
-	APIKey    string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
-	Raw       bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
+	QueueCommandBase
 
-	Send    *SendCommand    `cmd:"" help:"Send message to queue"`
-	Receive *ReceiveCommand `cmd:"" help:"Receive message from queue"`
-	Delete  *DeleteCommand  `cmd:"" help:"Delete message from queue"`
+	APIKey string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
+	Raw    bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
+
+	Send    *SendMessageCommand    `cmd:"" help:"Send message to queue"`
+	Receive *ReceiveMessageCommand `cmd:"" help:"Receive message from queue"`
+	Delete  *DeleteMessageCommand  `cmd:"" help:"Delete message from queue"`
 }
 
-type SendCommand struct {
-	Content string `arg:"" help:"Content of the message to send. if - read from stdin" name:"content"`
+type QueueCommand struct {
+	Create       *CreateQueueCommand  `cmd:"" help:"Create a new queue"`
+	List         *ListQueueCommand    `cmd:"" help:"List queues"`
+	Get          *GetQueueCommand     `cmd:"" help:"Get queue details"`
+	Modify       *ModifyQueueCommand  `cmd:"" help:"Modify queue settings"`
+	Delete       *DeleteQueueCommand  `cmd:"" help:"Delete a queue"`
+	MessageCount *MessageCountCommand `cmd:"" help:"Get message count in a queue"`
+	RotateAPIKey *RotateAPIKeyCommand `cmd:"" help:"Rotate API key for a queue"`
+	Purge        *PurgeQueueCommand   `cmd:"" help:"Purge all messages in a queue"`
 }
 
-type ReceiveCommand struct {
-	Polling    bool          `help:"Enable polling to receive message" default:"false" env:"SIMPLEMQ_POLLING"`
-	Count      int           `help:"Number of messages to receive" default:"1" env:"SIMPLEMQ_RECEIVE_COUNT"`
-	AutoDelete bool          `help:"Automatically delete messages after receiving" default:"false" env:"SIMPLEMQ_AUTO_DELETE"`
-	Interval   time.Duration `help:"Polling interval for receiving message" default:"1s" env:"SIMPLEMQ_POLLING_INTERVAL"`
+type QueueCommandBase struct {
+	QueueName string `help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
 }
 
-type DeleteCommand struct {
-	MessageID string `arg:"" help:"ID of the message to delete" name:"message-id"`
+type ConfirmationCommandBase struct {
+	Force bool `help:"Force operation without confirmation prompt" short:"f" default:"false" env:"SIMPLEMQ_FORCE"`
 }

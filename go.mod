@@ -3,6 +3,7 @@ module github.com/fujiwara/simplemq-cli
 go 1.25
 
 require (
+	github.com/Songmu/prompter v0.5.1
 	github.com/alecthomas/kong v1.13.0
 	github.com/sacloud/simplemq-api-go v0.3.0
 	golang.org/x/sys v0.38.0
@@ -33,6 +34,7 @@ require (
 	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090 // indirect
 	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
