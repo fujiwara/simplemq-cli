@@ -20,10 +20,11 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
 
 	var content string
-	if c.Message.Base64 {
-		content = base64.StdEncoding.EncodeToString([]byte(cmd.Content))
-	} else {
+	if c.Message.Raw {
 		content = cmd.Content
+	} else {
+		// automatic base64 encode
+		content = base64.StdEncoding.EncodeToString([]byte(cmd.Content))
 	}
 	logger.Debug("sending message", "content", content)
 	_, err = messageOp.Send(ctx, content)

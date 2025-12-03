@@ -16,14 +16,15 @@ type CLI struct {
 type MessageCommand struct {
 	QueueName string `help:"Queue name" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
 	APIKey    string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
-	Base64    bool   `name:"base64" help:"Use Base64 encoding for message content" default:"false" env:"SIMPLEMQ_BASE64"`
+	Raw       bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
 
 	Send    *SendCommand    `cmd:"" help:"Send message to queue"`
 	Receive *ReceiveCommand `cmd:"" help:"Receive message from queue"`
+	Delete  *DeleteCommand  `cmd:"" help:"Delete message from queue"`
 }
 
 type SendCommand struct {
-	Content string `arg:"" help:"Content of the message to send" name:"content" env:"SIMPLEMQ_MESSAGE_CONTENT"`
+	Content string `arg:"" help:"Content of the message to send. if - read from stdin" name:"content"`
 }
 
 type ReceiveCommand struct {
@@ -31,5 +32,8 @@ type ReceiveCommand struct {
 	Count      int           `help:"Number of messages to receive" default:"1" env:"SIMPLEMQ_RECEIVE_COUNT"`
 	AutoDelete bool          `help:"Automatically delete messages after receiving" default:"false" env:"SIMPLEMQ_AUTO_DELETE"`
 	Interval   time.Duration `help:"Polling interval for receiving message" default:"1s" env:"SIMPLEMQ_POLLING_INTERVAL"`
-	Raw        bool          `help:"Output raw message without pretty print" default:"false" env:"SIMPLEMQ_RAW_OUTPUT"`
+}
+
+type DeleteCommand struct {
+	MessageID string `arg:"" help:"ID of the message to delete" name:"message-id"`
 }

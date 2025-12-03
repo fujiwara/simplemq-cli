@@ -16,6 +16,7 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 	logger := slog.With("queue_name", c.Message.QueueName)
 
 	cmd := c.Message.Receive
+	raw := c.Message.Raw
 	client, err := simplemq.NewMessageClient(c.Message.APIKey)
 	if err != nil {
 		return fmt.Errorf("failed to create message client: %w", err)
@@ -32,13 +33,13 @@ func runReceiveCommand(ctx context.Context, c *CLI) error {
 		for _, msg := range msgs {
 			logger.Debug("received message", "message", msg)
 			var b []byte
-			if cmd.Raw {
+			if raw {
 				b, err = json.Marshal(msg)
 				if err != nil {
 					return fmt.Errorf("failed to marshal raw message: %w", err)
 				}
 			} else {
-				m := convertMessageContent(msg, c.Message.Base64)
+				m := convertMessageContent(msg)
 				b, err = json.Marshal(m)
 				if err != nil {
 					return fmt.Errorf("failed to marshal message: %w", err)
@@ -108,7 +109,7 @@ func UnixToTime(msec int64) time.Time {
 	return time.Unix(sec, nsec)
 }
 
-func convertMessageContent(msg message.Message, b64 bool) Message {
+func convertMessageContent(msg message.Message) Message {
 	m := Message{
 		ID:                  string(msg.ID),
 		CreatedAt:           UnixToTime(msg.CreatedAt),
@@ -117,16 +118,12 @@ func convertMessageContent(msg message.Message, b64 bool) Message {
 		AcquiredAt:          UnixToTime(msg.AcquiredAt),
 		VisibilityTimeoutAt: UnixToTime(msg.VisibilityTimeoutAt),
 	}
-	if b64 {
-		decoded, err := base64.StdEncoding.DecodeString(string(msg.Content))
-		if err != nil {
-			slog.Warn("failed to decode base64 message content", "error", err, "content", msg.Content)
-			m.Content = string(msg.Content)
-		} else {
-			m.Content = string(decoded)
-		}
-	} else {
+	decoded, err := base64.StdEncoding.DecodeString(string(msg.Content))
+	if err != nil {
+		slog.Warn("failed to decode base64 message content", "error", err, "content", msg.Content)
 		m.Content = string(msg.Content)
+	} else {
+		m.Content = string(decoded)
 	}
 	return m
 }
