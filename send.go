@@ -1,10 +1,13 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 
 	simplemq "github.com/sacloud/simplemq-api-go"
 )
@@ -19,12 +22,19 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 	}
 	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
 
+	var rawContent []byte
+	if cmd.Content == "-" { // read from stdin
+		rawContent, err = readInput(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("failed to read from stdin: %w", err)
+		}
+	}
 	var content string
 	if c.Message.Raw {
-		content = cmd.Content
+		content = string(rawContent)
 	} else {
 		// automatic base64 encode
-		content = base64.StdEncoding.EncodeToString([]byte(cmd.Content))
+		content = base64.StdEncoding.EncodeToString(rawContent)
 	}
 	logger.Debug("sending message", "content", content)
 	res, err := messageOp.Send(ctx, content)
@@ -33,4 +43,13 @@ func runSendCommand(ctx context.Context, c *CLI) error {
 	}
 	logger.Debug("message sent successfully", "messageID", res.ID)
 	return nil
+}
+
+func readInput(r io.Reader) ([]byte, error) {
+	b := new(bytes.Buffer)
+	_, err := io.Copy(b, r)
+	if err != nil {
+		return nil, err
+	}
+	return b.Bytes(), nil
 }
