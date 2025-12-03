@@ -35,7 +35,7 @@ type QueueCommand struct {
 }
 
 type QueueCommandBase struct {
-	QueueName string `help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
+	QueueName string `name:"queue" help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
 }
 
 type ConfirmationCommandBase struct {
