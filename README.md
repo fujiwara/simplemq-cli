@@ -4,11 +4,15 @@ A CLI tool for [SAKURA Cloud SimpleMQ](https://manual.sakura.ad.jp/cloud/applian
 
 ## Installation
 
-```bash
-go install github.com/fujiwara/simplemq-cli/cmd/simplemq-cli@latest
+### Homebrew
+
+```
+brew install fujiwara/tap/simplemq-cli
 ```
 
-Or download from [Releases](https://github.com/fujiwara/simplemq-cli/releases).
+### Binary releases
+
+https://github.com/fujiwara/simplemq-cli/releases
 
 ## Usage
 
