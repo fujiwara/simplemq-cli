@@ -1,5 +1,7 @@
 # Changelog
 
+## [v0.1.1](https://github.com/fujiwara/simplemq-cli/compare/v0.1.0...v0.1.1) - 2025-12-04
+
 ## [v0.1.0](https://github.com/fujiwara/simplemq-cli/compare/v0.0.4...v0.1.0) - 2025-12-03
 - send - accepts from stdin by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/9
 - Add queue management commands by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/11
