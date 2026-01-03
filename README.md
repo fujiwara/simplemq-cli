@@ -87,7 +87,7 @@ simplemq-cli message delete --queue myqueue --api-key <api-key> <message-id>
 
 ### Queue Management
 
-Queue management commands require `SAKURACLOUD_ACCESS_TOKEN` and `SAKURACLOUD_ACCESS_TOKEN_SECRET` environment variables for authentication.
+Queue management commands require `SAKURA_ACCESS_TOKEN` and `SAKURA_ACCESS_TOKEN_SECRET` environment variables for authentication.
 
 #### Create a queue
 
