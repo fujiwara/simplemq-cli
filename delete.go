@@ -17,7 +17,7 @@ func runDeleteMessageCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Message.Delete
 	logger := slog.With("queue_name", c.Message.QueueName)
 
-	client, err := simplemq.NewMessageClient(c.Message.APIKey)
+	client, err := simplemq.NewMessageClient(c.Message.APIKey, &queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create message client: %w", err)
 	}
@@ -39,7 +39,7 @@ type DeleteQueueCommand struct {
 func runDeleteQueueCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.Delete
 	logger := slog.With("queue_name", cmd.QueueName)
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}

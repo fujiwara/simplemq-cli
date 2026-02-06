@@ -17,7 +17,7 @@ type RotateAPIKeyCommand struct {
 func runRotateQueueAPIKeyCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.RotateAPIKey
 	logger := slog.With("queue_name", cmd.QueueName)
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}

@@ -17,7 +17,7 @@ type PurgeQueueCommand struct {
 func runPurgeQueueCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.Purge
 	logger := slog.With("queue_name", cmd.QueueName)
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}
