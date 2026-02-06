@@ -59,7 +59,7 @@ func runModifyQueueCommand(ctx context.Context, c *CLI) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal queue: %w", err)
 	}
-	fmt.Println(string(b))
+	fmt.Fprintln(c.w, string(b))
 
 	return nil
 }

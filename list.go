@@ -11,8 +11,7 @@ import (
 
 type ListQueueCommand struct{}
 
-func runListQueueCommand(ctx context.Context, _ *CLI) error {
-	// cmd := c.Queue.List
+func runListQueueCommand(ctx context.Context, c *CLI) error {
 	logger := slog.Default()
 	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
@@ -26,7 +25,7 @@ func runListQueueCommand(ctx context.Context, _ *CLI) error {
 	}
 	for _, q := range queues {
 		b, _ := json.Marshal(q)
-		fmt.Println(string(b))
+		fmt.Fprintln(c.w, string(b))
 	}
 	return nil
 }

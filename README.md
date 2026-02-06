@@ -168,6 +168,39 @@ If `--raw` flag is specified, the raw message from SimpleMQ API is output withou
 {"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
 ```
 
+## Local Server for Development and Testing
+
+`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory storage.
+
+### Install and Start
+
+```bash
+go install github.com/fujiwara/simplemq-cli/cmd/simplemq-localserver@latest
+simplemq-localserver
+# simplemq-localserver listening on 127.0.0.1:18080
+```
+
+You can specify a custom listen address with the `-addr` flag:
+
+```bash
+simplemq-localserver -addr :9090
+```
+
+### Use with simplemq-cli
+
+```bash
+export SIMPLEMQ_MESSAGE_API_URL=http://localhost:18080
+export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted
+
+# Send a message
+simplemq-cli message send --queue myqueue "Hello from localserver!"
+
+# Receive the message
+simplemq-cli message receive --queue myqueue
+```
+
+Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
+
 ## Options
 
 ### Message Options

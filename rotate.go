@@ -42,6 +42,6 @@ func runRotateQueueAPIKeyCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to rotate API key: %w", err)
 	}
 	logger.Debug("API key rotated successfully")
-	fmt.Println(res)
+	fmt.Fprintln(c.w, res)
 	return nil
 }
