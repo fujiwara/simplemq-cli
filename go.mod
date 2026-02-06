@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/sacloud/saclient-go v0.2.6
 	github.com/sacloud/simplemq-api-go v0.4.0
-	golang.org/x/sys v0.38.0
+	golang.org/x/sys v0.40.0
 )
 
 require (
