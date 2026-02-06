@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"io"
+
 	"github.com/alecthomas/kong"
 )
 
@@ -10,6 +12,8 @@ type CLI struct {
 
 	Message *MessageCommand `cmd:"" help:"Message related commands"`
 	Queue   *QueueCommand   `cmd:"" help:"Queue related commands"`
+
+	w io.Writer `kong:"-"`
 }
 
 type MessageCommand struct {

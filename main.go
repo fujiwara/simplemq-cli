@@ -20,6 +20,7 @@ func Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
+	c.w = os.Stdout
 	if c.Debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	} else {

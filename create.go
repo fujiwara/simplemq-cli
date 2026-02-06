@@ -46,6 +46,6 @@ func runCreateQueueCommand(ctx context.Context, c *CLI) error {
 	}
 	logger.Debug("queue created successfully", "queue", q)
 	b, _ := json.Marshal(q)
-	fmt.Println(string(b))
+	fmt.Fprintln(c.w, string(b))
 	return nil
 }

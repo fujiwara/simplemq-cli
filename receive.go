@@ -65,7 +65,7 @@ func runReceiveMessageCommand(ctx context.Context, c *CLI) error {
 					return fmt.Errorf("failed to marshal message: %w", err)
 				}
 			}
-			fmt.Println(string(b))
+			fmt.Fprintln(c.w, string(b))
 
 			if cmd.AutoDelete {
 				logger.Debug("deleting message", "messageID", msg.ID)

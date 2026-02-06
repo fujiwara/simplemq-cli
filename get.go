@@ -28,7 +28,7 @@ func runGetQueueCommand(ctx context.Context, c *CLI) error {
 	}
 	logger.Debug("queue details retrieved successfully", "queue", queue)
 	b, _ := json.Marshal(queue)
-	fmt.Println(string(b))
+	fmt.Fprintln(c.w, string(b))
 	return nil
 }
 

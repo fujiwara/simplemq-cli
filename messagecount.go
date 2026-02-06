@@ -30,6 +30,6 @@ func runMessageCountCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to get message count: %w", err)
 	}
 	logger.Debug("message count retrieved successfully", "count", count)
-	fmt.Println(count)
+	fmt.Fprintln(c.w, count)
 	return nil
 }
