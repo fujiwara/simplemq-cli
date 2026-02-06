@@ -33,7 +33,7 @@ func runReceiveMessageCommand(ctx context.Context, c *CLI) error {
 
 	cmd := c.Message.Receive
 	raw := c.Message.Raw
-	client, err := simplemq.NewMessageClient(c.Message.APIKey, &queueClient)
+	client, err := newMessageClient(c)
 	if err != nil {
 		return fmt.Errorf("failed to create message client: %w", err)
 	}

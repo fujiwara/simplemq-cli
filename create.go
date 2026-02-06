@@ -8,10 +8,18 @@ import (
 
 	"github.com/sacloud/saclient-go"
 	simplemq "github.com/sacloud/simplemq-api-go"
+	"github.com/sacloud/simplemq-api-go/apis/v1/message"
 	"github.com/sacloud/simplemq-api-go/apis/v1/queue"
 )
 
 var queueClient saclient.Client
+
+func newMessageClient(c *CLI) (*message.Client, error) {
+	if u := c.Message.MessageAPIURL; u != "" {
+		return simplemq.NewMessageClientWithApiUrl(u, c.Message.APIKey, &queueClient)
+	}
+	return simplemq.NewMessageClient(c.Message.APIKey, &queueClient)
+}
 
 type CreateQueueCommand struct {
 	QueueCommandBase

@@ -15,8 +15,9 @@ type CLI struct {
 type MessageCommand struct {
 	QueueCommandBase
 
-	APIKey string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
-	Raw    bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
+	APIKey        string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
+	MessageAPIURL string `help:"Message API URL" env:"SIMPLEMQ_MESSAGE_API_URL"`
+	Raw           bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
 
 	Send    *SendMessageCommand    `cmd:"" help:"Send message to queue"`
 	Receive *ReceiveMessageCommand `cmd:"" help:"Receive message from queue"`
