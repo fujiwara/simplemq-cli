@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.2.0](https://github.com/fujiwara/simplemq-cli/compare/v0.1.0...v0.2.0) - 2026-02-06
+- update SDKs by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/17
+- Update simplemq-api-go to v0.4.0 by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/23
+- Bump actions/checkout from 5.0.1 to 6.0.2 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/20
+- Bump Songmu/tagpr from 1.8.4 to 1.15.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/19
+- Bump actions/setup-go from 6.1.0 to 6.2.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/18
+
 ## [v0.1.0](https://github.com/fujiwara/simplemq-cli/compare/v0.0.4...v0.1.0) - 2025-12-03
 - send - accepts from stdin by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/9
 - Add queue management commands by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/11
