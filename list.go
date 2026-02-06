@@ -14,7 +14,7 @@ type ListQueueCommand struct{}
 func runListQueueCommand(ctx context.Context, _ *CLI) error {
 	// cmd := c.Queue.List
 	logger := slog.Default()
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}

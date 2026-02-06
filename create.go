@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/sacloud/saclient-go"
 	simplemq "github.com/sacloud/simplemq-api-go"
 	"github.com/sacloud/simplemq-api-go/apis/v1/queue"
 )
+
+var queueClient saclient.Client
 
 type CreateQueueCommand struct {
 	QueueCommandBase
@@ -18,7 +21,7 @@ type CreateQueueCommand struct {
 func runCreateQueueCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.Create
 	logger := slog.Default()
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}

@@ -19,7 +19,7 @@ type ModifyQueueCommand struct {
 func runModifyQueueCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.Modify
 	logger := slog.With("queue_name", cmd.QueueName)
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}

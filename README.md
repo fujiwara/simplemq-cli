@@ -201,8 +201,8 @@ Queue commands require the following environment variables for authentication:
 
 | Environment Variable | Description |
 |---------------------|-------------|
-| `SAKURACLOUD_ACCESS_TOKEN` | Access token for queue management (required) |
-| `SAKURACLOUD_ACCESS_TOKEN_SECRET` | Access token secret for queue management (required) |
+| `SAKURA_ACCESS_TOKEN` | Access token for queue management (required) |
+| `SAKURA_ACCESS_TOKEN_SECRET` | Access token secret for queue management (required) |
 
 | Option | Environment Variable | Description |
 |--------|---------------------|-------------|

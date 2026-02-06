@@ -17,7 +17,7 @@ type GetQueueCommand struct {
 func runGetQueueCommand(ctx context.Context, c *CLI) error {
 	cmd := c.Queue.Get
 	logger := slog.With("queue_name", cmd.QueueName)
-	client, err := simplemq.NewQueueClient()
+	client, err := simplemq.NewQueueClient(&queueClient)
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}
