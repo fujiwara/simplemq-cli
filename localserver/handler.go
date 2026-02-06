@@ -4,60 +4,32 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 )
 
-var pathPattern = regexp.MustCompile(`^/v1/queues/([^/]+)/messages(?:/([^/]+))?$`)
+func (s *Server) buildMux() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /v1/queues/{queueName}/messages", s.authMiddleware(s.handleSend))
+	mux.HandleFunc("GET /v1/queues/{queueName}/messages", s.authMiddleware(s.handleReceive))
+	mux.HandleFunc("PUT /v1/queues/{queueName}/messages/{messageID}", s.authMiddleware(s.handleExtendTimeout))
+	mux.HandleFunc("DELETE /v1/queues/{queueName}/messages/{messageID}", s.authMiddleware(s.handleDelete))
+	return mux
+}
+
+func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		auth := r.Header.Get("Authorization")
+		if !strings.HasPrefix(auth, "Bearer ") || strings.TrimPrefix(auth, "Bearer ") == "" {
+			writeError(w, http.StatusUnauthorized, "authorization required")
+			return
+		}
+		next(w, r)
+	}
+}
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Auth check: Bearer token must be present
-	auth := r.Header.Get("Authorization")
-	if !strings.HasPrefix(auth, "Bearer ") || strings.TrimPrefix(auth, "Bearer ") == "" {
-		writeError(w, http.StatusUnauthorized, "authorization required")
-		return
-	}
-
-	matches := pathPattern.FindStringSubmatch(r.URL.Path)
-	if matches == nil {
-		writeError(w, http.StatusNotFound, "not found")
-		return
-	}
-
-	queueName := matches[1]
-	messageID := matches[2]
-	q := s.store.getQueue(queueName)
-	now := time.Now()
-
-	switch r.Method {
-	case http.MethodPost:
-		if messageID != "" {
-			writeError(w, http.StatusNotFound, "not found")
-			return
-		}
-		s.handleSend(w, r, q, now)
-	case http.MethodGet:
-		if messageID != "" {
-			writeError(w, http.StatusNotFound, "not found")
-			return
-		}
-		s.handleReceive(w, q, now)
-	case http.MethodPut:
-		if messageID == "" {
-			writeError(w, http.StatusNotFound, "not found")
-			return
-		}
-		s.handleExtendTimeout(w, q, messageID, now)
-	case http.MethodDelete:
-		if messageID == "" {
-			writeError(w, http.StatusNotFound, "not found")
-			return
-		}
-		s.handleDelete(w, q, messageID)
-	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-	}
+	s.mux.ServeHTTP(w, r)
 }
 
 type sendRequest struct {
@@ -87,7 +59,11 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-func (s *Server) handleSend(w http.ResponseWriter, r *http.Request, q *queue, now time.Time) {
+func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
+	queueName := r.PathValue("queueName")
+	q := s.store.getQueue(queueName)
+	now := time.Now()
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "failed to read body")
@@ -116,7 +92,11 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request, q *queue, no
 	})
 }
 
-func (s *Server) handleReceive(w http.ResponseWriter, q *queue, now time.Time) {
+func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
+	queueName := r.PathValue("queueName")
+	q := s.store.getQueue(queueName)
+	now := time.Now()
+
 	msg := q.receive(now)
 	messages := []messageResponse{}
 	if msg != nil {
@@ -136,7 +116,12 @@ func (s *Server) handleReceive(w http.ResponseWriter, q *queue, now time.Time) {
 	})
 }
 
-func (s *Server) handleExtendTimeout(w http.ResponseWriter, q *queue, messageID string, now time.Time) {
+func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
+	queueName := r.PathValue("queueName")
+	messageID := r.PathValue("messageID")
+	q := s.store.getQueue(queueName)
+	now := time.Now()
+
 	msg, err := q.extendTimeout(messageID, now)
 	if err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
@@ -156,7 +141,11 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, q *queue, messageID 
 	})
 }
 
-func (s *Server) handleDelete(w http.ResponseWriter, q *queue, messageID string) {
+func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
+	queueName := r.PathValue("queueName")
+	messageID := r.PathValue("messageID")
+	q := s.store.getQueue(queueName)
+
 	if err := q.delete(messageID); err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
 		return

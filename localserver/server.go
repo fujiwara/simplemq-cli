@@ -1,18 +1,24 @@
 package localserver
 
-import "net/http/httptest"
+import (
+	"net/http"
+	"net/http/httptest"
+)
 
 // Server is a local SimpleMQ-compatible test server.
 type Server struct {
 	httpServer *httptest.Server
+	mux        *http.ServeMux
 	store      *Store
 }
 
 // NewHandler creates a Server as an http.Handler without starting a listener.
 func NewHandler() *Server {
-	return &Server{
+	s := &Server{
 		store: NewStore(),
 	}
+	s.mux = s.buildMux()
+	return s
 }
 
 // NewServer creates and starts a new local SimpleMQ test server using httptest.
