@@ -2,12 +2,8 @@
 
 package main
 
-import (
-	"os"
-
-	"golang.org/x/sys/windows"
-)
+import "os"
 
 func signals() []os.Signal {
-	return []os.Signal{os.Interrupt, windows.SIGTERM}
+	return []os.Signal{os.Interrupt}
 }

@@ -177,7 +177,7 @@ If `--raw` flag is specified, the raw message from SimpleMQ API is output withou
 ```bash
 go install github.com/fujiwara/simplemq-cli/cmd/simplemq-localserver@latest
 simplemq-localserver
-# simplemq-localserver listening on :18080
+# simplemq-localserver listening on 127.0.0.1:18080
 ```
 
 You can specify a custom listen address with the `-addr` flag:
