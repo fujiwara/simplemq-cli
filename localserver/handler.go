@@ -2,11 +2,52 @@ package localserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
+
+var (
+	queueNamePattern      = regexp.MustCompile(`^[0-9a-zA-Z]+(-[0-9a-zA-Z]+)*$`)
+	messageContentPattern = regexp.MustCompile(`^[0-9a-zA-Z+/=]*$`)
+	messageIDPattern      = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+)
+
+const (
+	queueNameMinLength   = 5
+	queueNameMaxLength   = 64
+	messageContentMaxLen = 256000
+)
+
+func validateQueueName(name string) error {
+	if len(name) < queueNameMinLength || len(name) > queueNameMaxLength {
+		return fmt.Errorf("queue name must be between %d and %d characters", queueNameMinLength, queueNameMaxLength)
+	}
+	if !queueNamePattern.MatchString(name) {
+		return fmt.Errorf("queue name must match pattern %s", queueNamePattern.String())
+	}
+	return nil
+}
+
+func validateMessageContent(content string) error {
+	if len(content) > messageContentMaxLen {
+		return fmt.Errorf("message content must not exceed %d characters", messageContentMaxLen)
+	}
+	if !messageContentPattern.MatchString(content) {
+		return fmt.Errorf("message content must be base64 encoded")
+	}
+	return nil
+}
+
+func validateMessageID(id string) error {
+	if !messageIDPattern.MatchString(id) {
+		return fmt.Errorf("invalid message ID format")
+	}
+	return nil
+}
 
 func (s *Server) buildMux() *http.ServeMux {
 	mux := http.NewServeMux()
@@ -80,6 +121,10 @@ type errorResponse struct {
 
 func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -95,6 +140,10 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Content == "" {
 		writeError(w, http.StatusBadRequest, "content is required")
+		return
+	}
+	if err := validateMessageContent(req.Content); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -113,6 +162,10 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -138,6 +191,14 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
 	messageID := r.PathValue("messageID")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validateMessageID(messageID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -163,6 +224,14 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
 	messageID := r.PathValue("messageID")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validateMessageID(messageID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 
 	if err := q.delete(messageID); err != nil {
