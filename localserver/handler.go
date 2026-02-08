@@ -54,6 +54,25 @@ type messageResponse struct {
 	VisibilityTimeoutAt int64  `json:"visibility_timeout_at"`
 }
 
+type sendMessageResponse struct {
+	Result  string             `json:"result"`
+	Message newMessageResponse `json:"message"`
+}
+
+type receiveMessagesResponse struct {
+	Result   string            `json:"result"`
+	Messages []messageResponse `json:"messages"`
+}
+
+type singleMessageResponse struct {
+	Result  string          `json:"result"`
+	Message messageResponse `json:"message"`
+}
+
+type successResponse struct {
+	Result string `json:"result"`
+}
+
 type errorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -80,9 +99,9 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := q.send(req.Content, now)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
-		"message": newMessageResponse{
+	writeJSON(w, http.StatusOK, sendMessageResponse{
+		Result: "success",
+		Message: newMessageResponse{
 			ID:        msg.ID,
 			Content:   msg.Content,
 			CreatedAt: msg.CreatedAt.UnixMilli(),
@@ -110,9 +129,9 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 			VisibilityTimeoutAt: msg.VisibilityTimeoutAt.UnixMilli(),
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result":   "success",
-		"messages": messages,
+	writeJSON(w, http.StatusOK, receiveMessagesResponse{
+		Result:   "success",
+		Messages: messages,
 	})
 }
 
@@ -127,9 +146,9 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
-		"message": messageResponse{
+	writeJSON(w, http.StatusOK, singleMessageResponse{
+		Result: "success",
+		Message: messageResponse{
 			ID:                  msg.ID,
 			Content:             msg.Content,
 			CreatedAt:           msg.CreatedAt.UnixMilli(),
@@ -150,8 +169,8 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
+	writeJSON(w, http.StatusOK, successResponse{
+		Result: "success",
 	})
 }
 
