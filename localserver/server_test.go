@@ -3,6 +3,11 @@ package localserver_test
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/fujiwara/simplemq-cli/localserver"
@@ -249,5 +254,121 @@ func TestVisibilityTimeout(t *testing.T) {
 	recvOK2 := recvRes2.(*message.ReceiveMessageOK)
 	if len(recvOK2.Messages) != 0 {
 		t.Errorf("expected 0 messages (invisible), got %d", len(recvOK2.Messages))
+	}
+}
+
+// doRequest makes a raw HTTP request to the server, bypassing client-side validation.
+func doRequest(t *testing.T, method, url, body string) (int, map[string]any) {
+	t.Helper()
+	var bodyReader io.Reader
+	if body != "" {
+		bodyReader = strings.NewReader(body)
+	}
+	req, err := http.NewRequest(method, url, bodyReader)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer test-api-key")
+	if body != "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("failed to read response: %v", err)
+	}
+	var result map[string]any
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		t.Fatalf("failed to parse response JSON: %v", err)
+	}
+	return resp.StatusCode, result
+}
+
+func TestValidationQueueName(t *testing.T) {
+	srv := localserver.NewServer()
+	defer srv.Close()
+
+	tests := []struct {
+		name      string
+		queueName string
+	}{
+		{"too short", "ab"},
+		{"invalid characters", "test_queue!"},
+		{"starts with hyphen", "-test-queue"},
+		{"ends with hyphen", "test-queue-"},
+		{"consecutive hyphens", "test--queue"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test send
+			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), tt.queueName)
+			status, _ := doRequest(t, "POST", url, `{"content":"aGVsbG8="}`)
+			if status != http.StatusBadRequest {
+				t.Errorf("send: expected 400, got %d", status)
+			}
+
+			// Test receive
+			status, _ = doRequest(t, "GET", url, "")
+			if status != http.StatusBadRequest {
+				t.Errorf("receive: expected 400, got %d", status)
+			}
+		})
+	}
+}
+
+func TestValidationMessageContent(t *testing.T) {
+	srv := localserver.NewServer()
+	defer srv.Close()
+
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"non-base64 characters", "hello world!@#"},
+		{"contains spaces", "aGVs bG8="},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), "valid-queue")
+			body := fmt.Sprintf(`{"content":"%s"}`, tt.content)
+			status, _ := doRequest(t, "POST", url, body)
+			if status != http.StatusBadRequest {
+				t.Errorf("expected 400, got %d", status)
+			}
+		})
+	}
+}
+
+func TestValidationMessageID(t *testing.T) {
+	srv := localserver.NewServer()
+	defer srv.Close()
+
+	tests := []struct {
+		name      string
+		messageID string
+	}{
+		{"not a uuid", "not-a-uuid"},
+		{"uppercase uuid", "00000000-0000-0000-0000-00000000000A"},
+		{"missing section", "00000000-0000-0000-000000000000"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test delete
+			url := fmt.Sprintf("%s/v1/queues/%s/messages/%s", srv.URL(), "valid-queue", tt.messageID)
+			status, _ := doRequest(t, "DELETE", url, "")
+			if status != http.StatusBadRequest {
+				t.Errorf("delete: expected 400, got %d", status)
+			}
+
+			// Test extend timeout
+			status, _ = doRequest(t, "PUT", url, "")
+			if status != http.StatusBadRequest {
+				t.Errorf("extend timeout: expected 400, got %d", status)
+			}
+		})
 	}
 }

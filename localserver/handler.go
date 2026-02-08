@@ -2,11 +2,52 @@ package localserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
+
+var (
+	queueNamePattern      = regexp.MustCompile(`^[0-9a-zA-Z]+(-[0-9a-zA-Z]+)*$`)
+	messageContentPattern = regexp.MustCompile(`^[0-9a-zA-Z+/=]*$`)
+	messageIDPattern      = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+)
+
+const (
+	queueNameMinLength   = 5
+	queueNameMaxLength   = 64
+	messageContentMaxLen = 256000
+)
+
+func validateQueueName(name string) error {
+	if len(name) < queueNameMinLength || len(name) > queueNameMaxLength {
+		return fmt.Errorf("queue name must be between %d and %d characters", queueNameMinLength, queueNameMaxLength)
+	}
+	if !queueNamePattern.MatchString(name) {
+		return fmt.Errorf("queue name must match pattern %s", queueNamePattern.String())
+	}
+	return nil
+}
+
+func validateMessageContent(content string) error {
+	if len(content) > messageContentMaxLen {
+		return fmt.Errorf("message content must not exceed %d characters", messageContentMaxLen)
+	}
+	if !messageContentPattern.MatchString(content) {
+		return fmt.Errorf("message content must be base64 encoded")
+	}
+	return nil
+}
+
+func validateMessageID(id string) error {
+	if !messageIDPattern.MatchString(id) {
+		return fmt.Errorf("invalid message ID format")
+	}
+	return nil
+}
 
 func (s *Server) buildMux() *http.ServeMux {
 	mux := http.NewServeMux()
@@ -54,6 +95,25 @@ type messageResponse struct {
 	VisibilityTimeoutAt int64  `json:"visibility_timeout_at"`
 }
 
+type sendMessageResponse struct {
+	Result  string             `json:"result"`
+	Message newMessageResponse `json:"message"`
+}
+
+type receiveMessagesResponse struct {
+	Result   string            `json:"result"`
+	Messages []messageResponse `json:"messages"`
+}
+
+type singleMessageResponse struct {
+	Result  string          `json:"result"`
+	Message messageResponse `json:"message"`
+}
+
+type successResponse struct {
+	Result string `json:"result"`
+}
+
 type errorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -61,6 +121,10 @@ type errorResponse struct {
 
 func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -78,11 +142,15 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "content is required")
 		return
 	}
+	if err := validateMessageContent(req.Content); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	msg := q.send(req.Content, now)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
-		"message": newMessageResponse{
+	writeJSON(w, http.StatusOK, sendMessageResponse{
+		Result: "success",
+		Message: newMessageResponse{
 			ID:        msg.ID,
 			Content:   msg.Content,
 			CreatedAt: msg.CreatedAt.UnixMilli(),
@@ -94,6 +162,10 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -110,15 +182,23 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 			VisibilityTimeoutAt: msg.VisibilityTimeoutAt.UnixMilli(),
 		})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result":   "success",
-		"messages": messages,
+	writeJSON(w, http.StatusOK, receiveMessagesResponse{
+		Result:   "success",
+		Messages: messages,
 	})
 }
 
 func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
 	messageID := r.PathValue("messageID")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validateMessageID(messageID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
@@ -127,9 +207,9 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
-		"message": messageResponse{
+	writeJSON(w, http.StatusOK, singleMessageResponse{
+		Result: "success",
+		Message: messageResponse{
 			ID:                  msg.ID,
 			Content:             msg.Content,
 			CreatedAt:           msg.CreatedAt.UnixMilli(),
@@ -144,14 +224,22 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	queueName := r.PathValue("queueName")
 	messageID := r.PathValue("messageID")
+	if err := validateQueueName(queueName); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validateMessageID(messageID); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	q := s.store.getQueue(queueName)
 
 	if err := q.delete(messageID); err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{
-		"result": "success",
+	writeJSON(w, http.StatusOK, successResponse{
+		Result: "success",
 	})
 }
 
