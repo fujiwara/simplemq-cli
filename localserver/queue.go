@@ -37,7 +37,7 @@ func newQueue() *queue {
 	}
 }
 
-func (q *queue) send(content string, now time.Time) *storedMessage {
+func (q *queue) send(content string, now time.Time) storedMessage {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -49,10 +49,10 @@ func (q *queue) send(content string, now time.Time) *storedMessage {
 		ExpiresAt: now.Add(q.messageExpiration),
 	}
 	q.messages = append(q.messages, msg)
-	return msg
+	return *msg
 }
 
-func (q *queue) receive(now time.Time) *storedMessage {
+func (q *queue) receive(now time.Time) (storedMessage, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -65,9 +65,9 @@ func (q *queue) receive(now time.Time) *storedMessage {
 		msg.AcquiredAt = now
 		msg.UpdatedAt = now
 		msg.VisibilityTimeoutAt = now.Add(q.visibilityTimeout)
-		return msg
+		return *msg, true
 	}
-	return nil
+	return storedMessage{}, false
 }
 
 // compact removes expired messages from the slice. Must be called with mu held.
@@ -83,7 +83,7 @@ func (q *queue) compact(now time.Time) {
 	q.messages = q.messages[:n]
 }
 
-func (q *queue) extendTimeout(id string, now time.Time) (*storedMessage, error) {
+func (q *queue) extendTimeout(id string, now time.Time) (storedMessage, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
@@ -91,10 +91,10 @@ func (q *queue) extendTimeout(id string, now time.Time) (*storedMessage, error) 
 		if msg.ID == id {
 			msg.VisibilityTimeoutAt = now.Add(q.visibilityTimeout)
 			msg.UpdatedAt = now
-			return msg, nil
+			return *msg, nil
 		}
 	}
-	return nil, fmt.Errorf("message not found: %s", id)
+	return storedMessage{}, fmt.Errorf("message not found: %s", id)
 }
 
 func (q *queue) delete(id string) error {

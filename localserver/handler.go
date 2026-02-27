@@ -169,9 +169,9 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 	q := s.store.getQueue(queueName)
 	now := time.Now()
 
-	msg := q.receive(now)
+	msg, ok := q.receive(now)
 	messages := []messageResponse{}
-	if msg != nil {
+	if ok {
 		messages = append(messages, messageResponse{
 			ID:                  msg.ID,
 			Content:             msg.Content,
