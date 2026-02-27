@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.2.2](https://github.com/fujiwara/simplemq-cli/compare/v0.2.1...v0.2.2) - 2026-02-27
+- Fix data race in localserver queue operations by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/27
+
 ## [v0.2.1](https://github.com/fujiwara/simplemq-cli/compare/v0.2.0...v0.2.1) - 2026-02-08
 - Add localserver and message integration tests by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/24
 - Replace map[string]any with typed structs for localserver responses by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/26
