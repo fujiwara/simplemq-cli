@@ -31,7 +31,7 @@ func resetOutput(c *CLI) {
 }
 
 func TestMessageSendAndReceive(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -61,7 +61,7 @@ func TestMessageSendAndReceive(t *testing.T) {
 }
 
 func TestMessageReceiveEmpty(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -78,7 +78,7 @@ func TestMessageReceiveEmpty(t *testing.T) {
 }
 
 func TestMessageSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -114,7 +114,7 @@ func TestMessageSendReceiveDelete(t *testing.T) {
 }
 
 func TestMessageReceiveAutoDelete(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 	ctx := t.Context()
 

@@ -65,6 +65,13 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			writeError(w, http.StatusUnauthorized, "authorization required")
 			return
 		}
+		if s.apiKey != "" {
+			token := strings.TrimPrefix(auth, "Bearer ")
+			if token != s.apiKey {
+				writeError(w, http.StatusUnauthorized, "invalid api key")
+				return
+			}
+		}
 		next(w, r)
 	}
 }
