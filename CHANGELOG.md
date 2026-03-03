@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.3.0](https://github.com/fujiwara/simplemq-cli/compare/v0.2.2...v0.3.0) - 2026-03-03
+- Add optional API key validation to localserver by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/35
+- Bump golang.org/x/sys from 0.40.0 to 0.41.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/34
+- Bump Songmu/tagpr from 1.15.0 to 1.17.1 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/33
+- Bump github.com/sacloud/saclient-go from 0.2.6 to 0.3.1 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/32
+- Bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/30
+- Bump actions/setup-go from 6.2.0 to 6.3.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/29
+- Bump github.com/alecthomas/kong from 1.13.0 to 1.14.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/31
+- Support Go 1.25 and 1.26 in CI, build release with 1.26 by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/37
+
 ## [v0.2.2](https://github.com/fujiwara/simplemq-cli/compare/v0.2.1...v0.2.2) - 2026-02-27
 - Fix data race in localserver queue operations by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/27
 
