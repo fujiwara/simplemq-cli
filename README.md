@@ -186,11 +186,19 @@ You can specify a custom listen address with the `-addr` flag:
 simplemq-localserver -addr :9090
 ```
 
+You can optionally require a specific API key for authentication with the `-api-key` flag:
+
+```bash
+simplemq-localserver -api-key my-secret-key
+```
+
+If `-api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
+
 ### Use with simplemq-cli
 
 ```bash
 export SIMPLEMQ_MESSAGE_API_URL=http://localhost:18080
-export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted
+export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted (or the specific key if -api-key was set)
 
 # Send a message
 simplemq-cli message send --queue myqueue "Hello from localserver!"

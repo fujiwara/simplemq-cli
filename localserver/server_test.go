@@ -39,7 +39,7 @@ func b64(s string) string {
 const nonexistentUUID = "00000000-0000-0000-0000-000000000000"
 
 func TestSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -114,7 +114,7 @@ func TestSendReceiveDelete(t *testing.T) {
 }
 
 func TestEmptyReceive(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -134,7 +134,7 @@ func TestEmptyReceive(t *testing.T) {
 }
 
 func TestDeleteNotFound(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -153,7 +153,7 @@ func TestDeleteNotFound(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	// Use empty token to trigger 401
@@ -169,8 +169,69 @@ func TestUnauthorized(t *testing.T) {
 	}
 }
 
+func TestAPIKeyValidation(t *testing.T) {
+	srv := localserver.NewServer("correct-key")
+	defer srv.Close()
+
+	ctx := context.Background()
+	queueName := "test-queue"
+	content := b64("hello")
+
+	t.Run("correct key accepted", func(t *testing.T) {
+		client := newTestClient(t, srv.URL(), "correct-key")
+		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
+		if err != nil {
+			t.Fatalf("send failed: %v", err)
+		}
+		if _, ok := sendRes.(*message.SendMessageOK); !ok {
+			t.Fatalf("expected SendMessageOK, got %T", sendRes)
+		}
+	})
+
+	t.Run("wrong key rejected", func(t *testing.T) {
+		client := newTestClient(t, srv.URL(), "wrong-key")
+		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
+		if err != nil {
+			t.Fatalf("send request failed: %v", err)
+		}
+		if _, ok := sendRes.(*message.SendMessageUnauthorized); !ok {
+			t.Fatalf("expected SendMessageUnauthorized, got %T", sendRes)
+		}
+	})
+
+	t.Run("empty key rejected", func(t *testing.T) {
+		client := newTestClient(t, srv.URL(), "")
+		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
+		if err != nil {
+			t.Fatalf("send request failed: %v", err)
+		}
+		if _, ok := sendRes.(*message.SendMessageUnauthorized); !ok {
+			t.Fatalf("expected SendMessageUnauthorized, got %T", sendRes)
+		}
+	})
+}
+
+func TestNoAPIKeyAcceptsAny(t *testing.T) {
+	srv := localserver.NewServer("")
+	defer srv.Close()
+
+	ctx := context.Background()
+	queueName := "test-queue"
+	content := b64("hello")
+
+	// Any non-empty key should be accepted when no API key is configured
+	client := newTestClient(t, srv.URL(), "any-random-key")
+	sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
+	if err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+	if _, ok := sendRes.(*message.SendMessageOK); !ok {
+		t.Fatalf("expected SendMessageOK, got %T", sendRes)
+	}
+}
+
 func TestExtendTimeout(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -223,7 +284,7 @@ func TestExtendTimeout(t *testing.T) {
 }
 
 func TestVisibilityTimeout(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -258,7 +319,7 @@ func TestVisibilityTimeout(t *testing.T) {
 }
 
 // doRequest makes a raw HTTP request to the server, bypassing client-side validation.
-func doRequest(t *testing.T, method, url, body string) (int, map[string]any) {
+func doRequest(t *testing.T, method, url, token, body string) (int, map[string]any) {
 	t.Helper()
 	var bodyReader io.Reader
 	if body != "" {
@@ -268,7 +329,7 @@ func doRequest(t *testing.T, method, url, body string) (int, map[string]any) {
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	req.Header.Set("Authorization", "Bearer test-api-key")
+	req.Header.Set("Authorization", "Bearer "+token)
 	if body != "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -289,7 +350,7 @@ func doRequest(t *testing.T, method, url, body string) (int, map[string]any) {
 }
 
 func TestValidationQueueName(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	tests := []struct {
@@ -306,13 +367,13 @@ func TestValidationQueueName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test send
 			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), tt.queueName)
-			status, _ := doRequest(t, "POST", url, `{"content":"aGVsbG8="}`)
+			status, _ := doRequest(t, "POST", url, "test-api-key", `{"content":"aGVsbG8="}`)
 			if status != http.StatusBadRequest {
 				t.Errorf("send: expected 400, got %d", status)
 			}
 
 			// Test receive
-			status, _ = doRequest(t, "GET", url, "")
+			status, _ = doRequest(t, "GET", url, "test-api-key", "")
 			if status != http.StatusBadRequest {
 				t.Errorf("receive: expected 400, got %d", status)
 			}
@@ -321,7 +382,7 @@ func TestValidationQueueName(t *testing.T) {
 }
 
 func TestValidationMessageContent(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	tests := []struct {
@@ -335,7 +396,7 @@ func TestValidationMessageContent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), "valid-queue")
 			body := fmt.Sprintf(`{"content":"%s"}`, tt.content)
-			status, _ := doRequest(t, "POST", url, body)
+			status, _ := doRequest(t, "POST", url, "test-api-key", body)
 			if status != http.StatusBadRequest {
 				t.Errorf("expected 400, got %d", status)
 			}
@@ -344,7 +405,7 @@ func TestValidationMessageContent(t *testing.T) {
 }
 
 func TestValidationMessageID(t *testing.T) {
-	srv := localserver.NewServer()
+	srv := localserver.NewServer("")
 	defer srv.Close()
 
 	tests := []struct {
@@ -359,13 +420,13 @@ func TestValidationMessageID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test delete
 			url := fmt.Sprintf("%s/v1/queues/%s/messages/%s", srv.URL(), "valid-queue", tt.messageID)
-			status, _ := doRequest(t, "DELETE", url, "")
+			status, _ := doRequest(t, "DELETE", url, "test-api-key", "")
 			if status != http.StatusBadRequest {
 				t.Errorf("delete: expected 400, got %d", status)
 			}
 
 			// Test extend timeout
-			status, _ = doRequest(t, "PUT", url, "")
+			status, _ = doRequest(t, "PUT", url, "test-api-key", "")
 			if status != http.StatusBadRequest {
 				t.Errorf("extend timeout: expected 400, got %d", status)
 			}

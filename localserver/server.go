@@ -10,20 +10,24 @@ type Server struct {
 	httpServer *httptest.Server
 	mux        *http.ServeMux
 	store      *Store
+	apiKey     string
 }
 
 // NewHandler creates a Server as an http.Handler without starting a listener.
-func NewHandler() *Server {
+// If apiKey is non-empty, the server validates that incoming requests use this key.
+func NewHandler(apiKey string) *Server {
 	s := &Server{
-		store: NewStore(),
+		store:  NewStore(),
+		apiKey: apiKey,
 	}
 	s.mux = s.buildMux()
 	return s
 }
 
 // NewServer creates and starts a new local SimpleMQ test server using httptest.
-func NewServer() *Server {
-	s := NewHandler()
+// If apiKey is non-empty, the server validates that incoming requests use this key.
+func NewServer(apiKey string) *Server {
+	s := NewHandler(apiKey)
 	s.httpServer = httptest.NewServer(s)
 	return s
 }
