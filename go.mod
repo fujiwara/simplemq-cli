@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/Songmu/prompter v0.5.1
-	github.com/alecthomas/kong v1.13.0
+	github.com/alecthomas/kong v1.14.0
 	github.com/google/uuid v1.6.0
 	github.com/sacloud/saclient-go v0.3.1
 	github.com/sacloud/simplemq-api-go v0.4.0
