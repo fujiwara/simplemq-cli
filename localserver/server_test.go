@@ -39,7 +39,7 @@ func b64(s string) string {
 const nonexistentUUID = "00000000-0000-0000-0000-000000000000"
 
 func TestSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -114,7 +114,7 @@ func TestSendReceiveDelete(t *testing.T) {
 }
 
 func TestEmptyReceive(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -134,7 +134,7 @@ func TestEmptyReceive(t *testing.T) {
 }
 
 func TestDeleteNotFound(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -153,7 +153,7 @@ func TestDeleteNotFound(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	// Use empty token to trigger 401
@@ -170,7 +170,7 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestAPIKeyValidation(t *testing.T) {
-	srv := localserver.NewServer("correct-key")
+	srv := localserver.NewServer(localserver.Config{APIKey: "correct-key"})
 	defer srv.Close()
 
 	ctx := context.Background()
@@ -212,7 +212,7 @@ func TestAPIKeyValidation(t *testing.T) {
 }
 
 func TestNoAPIKeyAcceptsAny(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	ctx := context.Background()
@@ -231,7 +231,7 @@ func TestNoAPIKeyAcceptsAny(t *testing.T) {
 }
 
 func TestExtendTimeout(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -284,7 +284,7 @@ func TestExtendTimeout(t *testing.T) {
 }
 
 func TestVisibilityTimeout(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	client := newTestClient(t, srv.URL(), "test-api-key")
@@ -350,7 +350,7 @@ func doRequest(t *testing.T, method, url, token, body string) (int, map[string]a
 }
 
 func TestValidationQueueName(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {
@@ -382,7 +382,7 @@ func TestValidationQueueName(t *testing.T) {
 }
 
 func TestValidationMessageContent(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {
@@ -405,7 +405,7 @@ func TestValidationMessageContent(t *testing.T) {
 }
 
 func TestValidationMessageID(t *testing.T) {
-	srv := localserver.NewServer("")
+	srv := localserver.NewServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {

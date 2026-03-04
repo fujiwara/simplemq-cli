@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 
+	"github.com/alecthomas/kong"
 	"github.com/fujiwara/simplemq-cli/localserver"
 )
 
@@ -22,15 +22,12 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	var addr string
-	var apiKey string
-	flag.StringVar(&addr, "addr", "127.0.0.1:18080", "listen address")
-	flag.StringVar(&apiKey, "api-key", "", "API key for authentication (if empty, any key is accepted)")
-	flag.Parse()
+	var cfg localserver.Config
+	kong.Parse(&cfg)
 
-	handler := localserver.NewHandler(apiKey)
+	handler := localserver.NewHandler(cfg)
 	srv := &http.Server{
-		Addr:    addr,
+		Addr:    cfg.Addr,
 		Handler: handler,
 	}
 
@@ -39,11 +36,11 @@ func run(ctx context.Context) error {
 		srv.Shutdown(context.Background())
 	}()
 
-	fmt.Fprintf(os.Stderr, "simplemq-localserver listening on %s\n", addr)
+	fmt.Fprintf(os.Stderr, "simplemq-localserver listening on %s\n", cfg.Addr)
 	fmt.Fprintf(os.Stderr, "\nTo use with simplemq-cli:\n")
-	fmt.Fprintf(os.Stderr, "  export SIMPLEMQ_MESSAGE_API_URL=http://%s\n", addr)
-	if apiKey != "" {
-		fmt.Fprintf(os.Stderr, "  export SIMPLEMQ_API_KEY=%s\n\n", apiKey)
+	fmt.Fprintf(os.Stderr, "  export SIMPLEMQ_MESSAGE_API_URL=http://%s\n", cfg.Addr)
+	if cfg.APIKey != "" {
+		fmt.Fprintf(os.Stderr, "  export SIMPLEMQ_API_KEY=%s\n\n", cfg.APIKey)
 	} else {
 		fmt.Fprintf(os.Stderr, "  export SIMPLEMQ_API_KEY=dummy\n\n")
 	}
