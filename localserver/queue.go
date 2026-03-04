@@ -30,10 +30,10 @@ type queue struct {
 	messageExpiration time.Duration
 }
 
-func newQueue() *queue {
+func newQueue(visibilityTimeout, messageExpiration time.Duration) *queue {
 	return &queue{
-		visibilityTimeout: defaultVisibilityTimeout,
-		messageExpiration: defaultMessageExpiration,
+		visibilityTimeout: visibilityTimeout,
+		messageExpiration: messageExpiration,
 	}
 }
 
@@ -112,14 +112,25 @@ func (q *queue) delete(id string) error {
 
 // Store manages named queues. Queues are created on first access.
 type Store struct {
-	mu     sync.Mutex
-	queues map[string]*queue
+	mu                sync.Mutex
+	queues            map[string]*queue
+	visibilityTimeout time.Duration
+	messageExpiration time.Duration
 }
 
 // NewStore creates a new empty Store.
-func NewStore() *Store {
+// If visibilityTimeout or messageExpiration is zero, the default value is used.
+func NewStore(visibilityTimeout, messageExpiration time.Duration) *Store {
+	if visibilityTimeout <= 0 {
+		visibilityTimeout = defaultVisibilityTimeout
+	}
+	if messageExpiration <= 0 {
+		messageExpiration = defaultMessageExpiration
+	}
 	return &Store{
-		queues: make(map[string]*queue),
+		queues:            make(map[string]*queue),
+		visibilityTimeout: visibilityTimeout,
+		messageExpiration: messageExpiration,
 	}
 }
 
@@ -129,7 +140,7 @@ func (s *Store) getQueue(name string) *queue {
 
 	q, ok := s.queues[name]
 	if !ok {
-		q = newQueue()
+		q = newQueue(s.visibilityTimeout, s.messageExpiration)
 		s.queues[name] = q
 	}
 	return q

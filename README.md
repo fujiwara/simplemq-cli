@@ -180,19 +180,27 @@ simplemq-localserver
 # simplemq-localserver listening on 127.0.0.1:18080
 ```
 
-You can specify a custom listen address with the `-addr` flag:
+#### Options
+
+| Flag | Environment Variable | Default | Description |
+|------|---------------------|---------|-------------|
+| `--addr` | `SIMPLEMQ_LOCALSERVER_ADDR` | `127.0.0.1:18080` | Listen address |
+| `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
+| `--visibility-timeout-seconds` | `SIMPLEMQ_VISIBILITY_TIMEOUT_SECONDS` | `30` | Visibility timeout in seconds |
+| `--message-expire-seconds` | `SIMPLEMQ_MESSAGE_EXPIRE_SECONDS` | `345600` | Message expire time in seconds (default: 4 days) |
 
 ```bash
-simplemq-localserver -addr :9090
+# Custom listen address
+simplemq-localserver --addr :9090
+
+# Require a specific API key
+simplemq-localserver --api-key my-secret-key
+
+# Custom visibility timeout (10 seconds) and message expiration (1 hour)
+simplemq-localserver --visibility-timeout-seconds 10 --message-expire-seconds 3600
 ```
 
-You can optionally require a specific API key for authentication with the `-api-key` flag:
-
-```bash
-simplemq-localserver -api-key my-secret-key
-```
-
-If `-api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
+If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
 
 ### Use with simplemq-cli
 
