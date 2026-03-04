@@ -61,7 +61,7 @@ func TestMessageExpiration(t *testing.T) {
 }
 
 func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
-	cfg := Config{VisibilityTimeoutSeconds: 5}
+	cfg := Config{VisibilityTimeout: 5 * time.Second}
 	s := NewServer(cfg)
 	defer s.Close()
 
@@ -72,13 +72,13 @@ func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
 }
 
 func TestConfigMessageExpirePropagation(t *testing.T) {
-	cfg := Config{MessageExpireSeconds: 3600}
+	cfg := Config{MessageExpire: time.Hour}
 	s := NewServer(cfg)
 	defer s.Close()
 
 	q := s.store.getQueue("test")
-	if q.messageExpiration != 3600*time.Second {
-		t.Errorf("expected message expiration 3600s, got %s", q.messageExpiration)
+	if q.messageExpiration != time.Hour {
+		t.Errorf("expected message expiration 1h, got %s", q.messageExpiration)
 	}
 }
 

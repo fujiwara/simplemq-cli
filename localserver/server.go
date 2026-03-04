@@ -8,10 +8,10 @@ import (
 
 // Config holds configuration for the local SimpleMQ server.
 type Config struct {
-	APIKey                   string `help:"API key for authentication (if empty, any key is accepted)" env:"SIMPLEMQ_API_KEY"`
-	Addr                     string `help:"Listen address" default:"127.0.0.1:18080" env:"SIMPLEMQ_LOCALSERVER_ADDR"`
-	VisibilityTimeoutSeconds int    `help:"Visibility timeout in seconds" default:"30" env:"SIMPLEMQ_VISIBILITY_TIMEOUT_SECONDS"`
-	MessageExpireSeconds     int    `help:"Message expire time in seconds" default:"345600" env:"SIMPLEMQ_MESSAGE_EXPIRE_SECONDS"`
+	APIKey            string        `help:"API key for authentication (if empty, any key is accepted)" env:"SIMPLEMQ_API_KEY"`
+	Addr              string        `help:"Listen address" default:"127.0.0.1:18080" env:"SIMPLEMQ_LOCALSERVER_ADDR"`
+	VisibilityTimeout time.Duration `help:"Visibility timeout" default:"30s" env:"SIMPLEMQ_VISIBILITY_TIMEOUT"`
+	MessageExpire     time.Duration `help:"Message expire time" default:"96h" env:"SIMPLEMQ_MESSAGE_EXPIRE"`
 }
 
 // Server is a local SimpleMQ-compatible test server.
@@ -25,10 +25,8 @@ type Server struct {
 // NewHandler creates a Server as an http.Handler without starting a listener.
 // If cfg.APIKey is non-empty, the server validates that incoming requests use this key.
 func NewHandler(cfg Config) *Server {
-	visibilityTimeout := time.Duration(cfg.VisibilityTimeoutSeconds) * time.Second
-	messageExpiration := time.Duration(cfg.MessageExpireSeconds) * time.Second
 	s := &Server{
-		store:  NewStore(visibilityTimeout, messageExpiration),
+		store:  NewStore(cfg.VisibilityTimeout, cfg.MessageExpire),
 		apiKey: cfg.APIKey,
 	}
 	s.mux = s.buildMux()

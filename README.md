@@ -186,8 +186,8 @@ simplemq-localserver
 |------|---------------------|---------|-------------|
 | `--addr` | `SIMPLEMQ_LOCALSERVER_ADDR` | `127.0.0.1:18080` | Listen address |
 | `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
-| `--visibility-timeout-seconds` | `SIMPLEMQ_VISIBILITY_TIMEOUT_SECONDS` | `30` | Visibility timeout in seconds |
-| `--message-expire-seconds` | `SIMPLEMQ_MESSAGE_EXPIRE_SECONDS` | `345600` | Message expire time in seconds (default: 4 days) |
+| `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
+| `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
 
 ```bash
 # Custom listen address
@@ -197,7 +197,7 @@ simplemq-localserver --addr :9090
 simplemq-localserver --api-key my-secret-key
 
 # Custom visibility timeout (10 seconds) and message expiration (1 hour)
-simplemq-localserver --visibility-timeout-seconds 10 --message-expire-seconds 3600
+simplemq-localserver --visibility-timeout 10s --message-expire 1h
 ```
 
 If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
