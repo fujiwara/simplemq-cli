@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.4.0](https://github.com/fujiwara/simplemq-cli/compare/v0.3.0...v0.4.0) - 2026-03-04
+- Add Config struct to localserver, migrate from flag to kong by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/38
+- Move Local Server section after Options in README by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/40
+
 ## [v0.3.0](https://github.com/fujiwara/simplemq-cli/compare/v0.2.2...v0.3.0) - 2026-03-03
 - Add optional API key validation to localserver by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/35
 - Bump golang.org/x/sys from 0.40.0 to 0.41.0 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/34
