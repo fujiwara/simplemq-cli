@@ -168,55 +168,6 @@ If `--raw` flag is specified, the raw message from SimpleMQ API is output withou
 {"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
 ```
 
-## Local Server for Development and Testing
-
-`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory storage.
-
-### Install and Start
-
-```bash
-go install github.com/fujiwara/simplemq-cli/cmd/simplemq-localserver@latest
-simplemq-localserver
-# simplemq-localserver listening on 127.0.0.1:18080
-```
-
-#### Options
-
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `--addr` | `SIMPLEMQ_LOCALSERVER_ADDR` | `127.0.0.1:18080` | Listen address |
-| `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
-| `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
-| `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
-
-```bash
-# Custom listen address
-simplemq-localserver --addr :9090
-
-# Require a specific API key
-simplemq-localserver --api-key my-secret-key
-
-# Custom visibility timeout (10 seconds) and message expiration (1 hour)
-simplemq-localserver --visibility-timeout 10s --message-expire 1h
-```
-
-If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
-
-### Use with simplemq-cli
-
-```bash
-export SIMPLEMQ_MESSAGE_API_URL=http://localhost:18080
-export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted (or the specific key if -api-key was set)
-
-# Send a message
-simplemq-cli message send --queue myqueue "Hello from localserver!"
-
-# Receive the message
-simplemq-cli message receive --queue myqueue
-```
-
-Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
-
 ## Options
 
 ### Message Options
@@ -275,6 +226,55 @@ Queue commands require the following environment variables for authentication:
 | Option | Environment Variable | Default | Description |
 |--------|---------------------|---------|-------------|
 | `-f`, `--force` | `SIMPLEMQ_FORCE` | false | Force operation without confirmation prompt |
+
+## Local Server for Development and Testing
+
+`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory storage.
+
+### Install and Start
+
+```bash
+go install github.com/fujiwara/simplemq-cli/cmd/simplemq-localserver@latest
+simplemq-localserver
+# simplemq-localserver listening on 127.0.0.1:18080
+```
+
+#### Options
+
+| Flag | Environment Variable | Default | Description |
+|------|---------------------|---------|-------------|
+| `--addr` | `SIMPLEMQ_LOCALSERVER_ADDR` | `127.0.0.1:18080` | Listen address |
+| `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
+| `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
+| `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
+
+```bash
+# Custom listen address
+simplemq-localserver --addr :9090
+
+# Require a specific API key
+simplemq-localserver --api-key my-secret-key
+
+# Custom visibility timeout (10 seconds) and message expiration (1 hour)
+simplemq-localserver --visibility-timeout 10s --message-expire 1h
+```
+
+If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
+
+### Use with simplemq-cli
+
+```bash
+export SIMPLEMQ_MESSAGE_API_URL=http://localhost:18080
+export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted (or the specific key if -api-key was set)
+
+# Send a message
+simplemq-cli message send --queue myqueue "Hello from localserver!"
+
+# Receive the message
+simplemq-cli message receive --queue myqueue
+```
+
+Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
 
 ## License
 
