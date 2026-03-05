@@ -28,6 +28,7 @@ func Run(ctx context.Context) error {
 	}
 	slog.SetDefault(slog.New(sloghandler.NewLogHandler(os.Stderr, &sloghandler.HandlerOptions{
 		HandlerOptions: slog.HandlerOptions{Level: level},
+		Color:          true,
 	})))
 
 	switch kx.Command() {
