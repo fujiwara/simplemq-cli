@@ -278,6 +278,18 @@ simplemq-cli message send --queue myqueue "Hello from localserver!"
 simplemq-cli message receive --queue myqueue
 ```
 
+### API Request Rate Limit
+
+The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of **5 requests per second** by default (200ms interval between requests). This applies to all API calls including send, receive, and delete operations.
+
+When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
+
+```bash
+export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
+```
+
+For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
+
 Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
 
 The server logs each request with method, path, status code, and masked authorization header. Use `--debug` for additional detail such as message IDs and queue operations.
