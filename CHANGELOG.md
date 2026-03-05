@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.5.0](https://github.com/fujiwara/simplemq-cli/compare/v0.4.0...v0.5.0) - 2026-03-05
+- Add request logging to localserver by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/41
+- Add simplemq-localserver to goreleaser and Makefile by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/43
+
 ## [v0.4.0](https://github.com/fujiwara/simplemq-cli/compare/v0.3.0...v0.4.0) - 2026-03-04
 - Add Config struct to localserver, migrate from flag to kong by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/38
 - Move Local Server section after Options in README by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/40
