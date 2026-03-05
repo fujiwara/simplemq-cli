@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/fujiwara/simplemq-cli/localserver"
+	"github.com/fujiwara/sloghandler"
 )
 
 func main() {
@@ -24,11 +25,13 @@ func run(ctx context.Context) error {
 	var cfg localserver.Config
 	kong.Parse(&cfg)
 
+	level := slog.LevelInfo
 	if cfg.Debug {
-		slog.SetLogLoggerLevel(slog.LevelDebug)
-	} else {
-		slog.SetLogLoggerLevel(slog.LevelInfo)
+		level = slog.LevelDebug
 	}
+	slog.SetDefault(slog.New(sloghandler.NewLogHandler(os.Stderr, &sloghandler.HandlerOptions{
+		HandlerOptions: slog.HandlerOptions{Level: level},
+	})))
 
 	handler := localserver.NewHandler(cfg)
 	srv := &http.Server{
