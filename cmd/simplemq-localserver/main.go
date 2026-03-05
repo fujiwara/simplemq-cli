@@ -25,6 +25,12 @@ func run(ctx context.Context) error {
 	var cfg localserver.Config
 	kong.Parse(&cfg)
 
+	if cfg.Debug {
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+	} else {
+		slog.SetLogLoggerLevel(slog.LevelInfo)
+	}
+
 	handler := localserver.NewHandler(cfg)
 	srv := &http.Server{
 		Addr:    cfg.Addr,
