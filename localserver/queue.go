@@ -2,6 +2,7 @@ package localserver
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -142,6 +143,7 @@ func (s *Store) getQueue(name string) *queue {
 	if !ok {
 		q = newQueue(s.visibilityTimeout, s.messageExpiration)
 		s.queues[name] = q
+		slog.Info("queue created", "queue", name)
 	}
 	return q
 }
