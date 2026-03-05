@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -77,7 +78,35 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.mux.ServeHTTP(w, r)
+	rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+	s.mux.ServeHTTP(rw, r)
+	slog.Info("request",
+		"method", r.Method,
+		"path", r.URL.Path,
+		"status", rw.statusCode,
+		"authorization", maskAuthorization(r.Header.Get("Authorization")),
+	)
+}
+
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func maskAuthorization(auth string) string {
+	if auth == "" {
+		return ""
+	}
+	token := strings.TrimPrefix(auth, "Bearer ")
+	if len(token) <= 4 {
+		return "Bearer ****"
+	}
+	return "Bearer " + token[:4] + "****"
 }
 
 type sendRequest struct {
@@ -155,6 +184,7 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 	}
 
 	msg := q.send(req.Content, now)
+	slog.Debug("message sent", "queue", queueName, "message_id", msg.ID)
 	writeJSON(w, http.StatusOK, sendMessageResponse{
 		Result: "success",
 		Message: newMessageResponse{
@@ -177,6 +207,11 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
 	msg, ok := q.receive(now)
+	if ok {
+		slog.Debug("message received", "queue", queueName, "message_id", msg.ID)
+	} else {
+		slog.Debug("no messages available", "queue", queueName)
+	}
 	messages := []messageResponse{}
 	if ok {
 		messages = append(messages, messageResponse{
@@ -211,9 +246,11 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 
 	msg, err := q.extendTimeout(messageID, now)
 	if err != nil {
+		slog.Debug("extend timeout failed", "queue", queueName, "message_id", messageID, "error", err)
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
+	slog.Debug("timeout extended", "queue", queueName, "message_id", messageID)
 	writeJSON(w, http.StatusOK, singleMessageResponse{
 		Result: "success",
 		Message: messageResponse{
@@ -242,9 +279,11 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 	q := s.store.getQueue(queueName)
 
 	if err := q.delete(messageID); err != nil {
+		slog.Debug("delete failed", "queue", queueName, "message_id", messageID, "error", err)
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
+	slog.Debug("message deleted", "queue", queueName, "message_id", messageID)
 	writeJSON(w, http.StatusOK, successResponse{
 		Result: "success",
 	})

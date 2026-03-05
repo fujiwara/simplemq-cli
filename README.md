@@ -247,6 +247,7 @@ simplemq-localserver
 | `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
 | `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
 | `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
+| `--debug` | `SIMPLEMQ_DEBUG` | `false` | Enable debug mode (detailed request logging) |
 
 ```bash
 # Custom listen address
@@ -257,6 +258,9 @@ simplemq-localserver --api-key my-secret-key
 
 # Custom visibility timeout (10 seconds) and message expiration (1 hour)
 simplemq-localserver --visibility-timeout 10s --message-expire 1h
+
+# Enable debug logging
+simplemq-localserver --debug
 ```
 
 If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
@@ -275,6 +279,8 @@ simplemq-cli message receive --queue myqueue
 ```
 
 Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
+
+The server logs each request with method, path, status code, and masked authorization header. Use `--debug` for additional detail such as message IDs and queue operations.
 
 ## License
 

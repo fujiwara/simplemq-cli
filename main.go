@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/alecthomas/kong"
+	"github.com/fujiwara/sloghandler"
 )
 
 func Run(ctx context.Context) error {
@@ -21,11 +22,14 @@ func Run(ctx context.Context) error {
 		return fmt.Errorf("failed to parse arguments: %w", err)
 	}
 	c.w = os.Stdout
+	level := slog.LevelInfo
 	if c.Debug {
-		slog.SetLogLoggerLevel(slog.LevelDebug)
-	} else {
-		slog.SetLogLoggerLevel(slog.LevelInfo)
+		level = slog.LevelDebug
 	}
+	slog.SetDefault(slog.New(sloghandler.NewLogHandler(os.Stderr, &sloghandler.HandlerOptions{
+		HandlerOptions: slog.HandlerOptions{Level: level},
+		Color:          true,
+	})))
 
 	switch kx.Command() {
 	case "message send <content>":
