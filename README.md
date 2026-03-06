@@ -105,6 +105,9 @@ simplemq-cli queue list
 
 ```bash
 simplemq-cli queue get --queue myqueue
+
+# Or specify queue ID directly (skips list API call for name resolution)
+simplemq-cli queue get --queue-id 123456789012
 ```
 
 #### Modify queue settings
@@ -206,7 +209,8 @@ Queue commands require the following environment variables for authentication:
 
 | Option | Environment Variable | Description |
 |--------|---------------------|-------------|
-| `--queue`, `-q` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required for most commands) |
+| `--queue`, `-q` | `SIMPLEMQ_QUEUE_NAME` | Queue name (either --queue or --queue-id is required) |
+| `--queue-id` | `SIMPLEMQ_QUEUE_ID` | Queue ID. If specified, skip name resolution via list API |
 
 ### Queue Create Options
 

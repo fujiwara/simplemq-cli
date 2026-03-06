@@ -22,7 +22,7 @@ func runGetQueueCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}
 	logger.Debug("getting queue details")
-	queue, err := resolveQueue(ctx, client, cmd.QueueName)
+	queue, err := resolveQueueByBase(ctx, client, &cmd.QueueCommandBase)
 	if err != nil {
 		return fmt.Errorf("failed to get queue details: %w", err)
 	}
@@ -44,4 +44,16 @@ func resolveQueue(ctx context.Context, client *queue.Client, name string) (*queu
 		}
 	}
 	return nil, fmt.Errorf("queue not found: %s", name)
+}
+
+func resolveQueueByBase(ctx context.Context, client *queue.Client, base *QueueCommandBase) (*queue.CommonServiceItem, error) {
+	if base.QueueID != "" {
+		queueOp := simplemq.NewQueueOp(client)
+		q, err := queueOp.Read(ctx, base.QueueID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get queue by ID: %w", err)
+		}
+		return q, nil
+	}
+	return resolveQueue(ctx, client, base.QueueName)
 }

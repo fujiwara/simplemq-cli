@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/alecthomas/kong"
@@ -17,7 +18,7 @@ type CLI struct {
 }
 
 type MessageCommand struct {
-	QueueCommandBase
+	QueueName string `name:"queue" help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
 
 	APIKey        string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
 	MessageAPIURL string `help:"Message API URL" env:"SIMPLEMQ_MESSAGE_API_URL"`
@@ -40,7 +41,15 @@ type QueueCommand struct {
 }
 
 type QueueCommandBase struct {
-	QueueName string `name:"queue" help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
+	QueueName string `name:"queue" help:"Queue name" short:"q" env:"SIMPLEMQ_QUEUE_NAME"`
+	QueueID   string `name:"queue-id" help:"Queue ID (skip name resolution if specified)" env:"SIMPLEMQ_QUEUE_ID"`
+}
+
+func (b *QueueCommandBase) Validate() error {
+	if b.QueueName == "" && b.QueueID == "" {
+		return fmt.Errorf("either --queue or --queue-id must be specified")
+	}
+	return nil
 }
 
 type ConfirmationCommandBase struct {
