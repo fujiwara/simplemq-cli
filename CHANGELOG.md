@@ -1,5 +1,10 @@
 # Changelog
 
+## [v0.6.0](https://github.com/fujiwara/simplemq-cli/compare/v0.5.0...v0.6.0) - 2026-03-06
+- Add API request rate limit documentation by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/44
+- Add --queue-id option to queue commands by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/46
+- Add SQLite storage backend for localserver by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/47
+
 ## [v0.5.0](https://github.com/fujiwara/simplemq-cli/compare/v0.4.0...v0.5.0) - 2026-03-05
 - Add request logging to localserver by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/41
 - Add simplemq-localserver to goreleaser and Makefile by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/43
