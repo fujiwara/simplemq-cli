@@ -32,6 +32,7 @@ type SQLiteStore struct {
 	db                *sql.DB
 	visibilityTimeout time.Duration
 	messageExpiration time.Duration
+	done              chan struct{}
 }
 
 // NewSQLiteStore opens (or creates) the SQLite database at path and returns a Store.
@@ -56,11 +57,14 @@ func NewSQLiteStore(path string, visibilityTimeout, messageExpiration time.Durat
 	}
 
 	slog.Info("sqlite store opened", "path", path)
-	return &SQLiteStore{
+	s := &SQLiteStore{
 		db:                db,
 		visibilityTimeout: visibilityTimeout,
 		messageExpiration: messageExpiration,
-	}, nil
+		done:              make(chan struct{}),
+	}
+	go s.compactLoop()
+	return s, nil
 }
 
 func (s *SQLiteStore) withTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
@@ -101,14 +105,6 @@ func (s *SQLiteStore) Receive(queueName string, now time.Time) (msg storedMessag
 	visibilityTimeoutAtMilli := now.Add(s.visibilityTimeout).UnixMilli()
 
 	err := s.withTx(context.Background(), func(tx *sql.Tx) error {
-		// Delete expired messages first
-		compactQuery := `DELETE FROM messages WHERE queue_name = ? AND expires_at <= ?`
-		compactArgs := []any{queueName, nowMilli}
-		slog.Debug("sqlite exec", "sql", compactQuery, "args", compactArgs)
-		if _, err := tx.Exec(compactQuery, compactArgs...); err != nil {
-			return fmt.Errorf("failed to compact expired messages: %w", err)
-		}
-
 		// Find and atomically update the first available message
 		query := `UPDATE messages SET acquired_at = ?, updated_at = ?, visibility_timeout_at = ?
 		 WHERE rowid = (
@@ -197,6 +193,23 @@ func (s *SQLiteStore) Delete(queueName, id string) error {
 	})
 }
 
+func (s *SQLiteStore) compactLoop() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-s.done:
+			return
+		case now := <-ticker.C:
+			query := `DELETE FROM messages WHERE expires_at <= ?`
+			args := []any{now.UnixMilli()}
+			slog.Debug("sqlite compact", "sql", query, "args", args)
+			s.db.Exec(query, args...)
+		}
+	}
+}
+
 func (s *SQLiteStore) Close() error {
+	close(s.done)
 	return s.db.Close()
 }
