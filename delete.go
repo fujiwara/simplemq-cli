@@ -44,7 +44,7 @@ func runDeleteQueueCommand(ctx context.Context, c *CLI) error {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}
 	logger.Debug("getting queue details")
-	queue, err := resolveQueue(ctx, client, cmd.QueueName)
+	queue, err := resolveQueueByBase(ctx, client, &cmd.QueueCommandBase)
 	if err != nil {
 		return fmt.Errorf("failed to get queue details: %w", err)
 	}

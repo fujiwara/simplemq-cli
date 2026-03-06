@@ -13,9 +13,7 @@ func newTestCLI(serverURL, queueName string) *CLI {
 	return &CLI{
 		w: &bytes.Buffer{},
 		Message: &MessageCommand{
-			QueueCommandBase: QueueCommandBase{
-				QueueName: queueName,
-			},
+			QueueName:     queueName,
 			APIKey:        "test-api-key",
 			MessageAPIURL: serverURL,
 		},

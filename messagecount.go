@@ -19,7 +19,7 @@ func runMessageCountCommand(ctx context.Context, c *CLI) error {
 	if err != nil {
 		return fmt.Errorf("failed to create queue client: %w", err)
 	}
-	queue, err := resolveQueue(ctx, client, cmd.QueueName)
+	queue, err := resolveQueueByBase(ctx, client, &cmd.QueueCommandBase)
 	if err != nil {
 		return fmt.Errorf("failed to get queue details: %w", err)
 	}
