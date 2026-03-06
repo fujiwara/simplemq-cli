@@ -32,6 +32,14 @@ jobs:
           {
             echo '## Benchmark Results (localserver: Memory vs SQLite)'
             echo ''
+            echo 'HTTP request throughput via httptest. Single client, sequential requests.'
+            echo ''
+            echo '| Benchmark | Description |'
+            echo '|-----------|-------------|'
+            echo '| Send | POST a message |'
+            echo '| SendReceiveDelete | POST + GET + DELETE a message |'
+            echo '| ReceiveEmpty | GET from an empty queue |'
+            echo ''
             echo '```'
             benchstat Memory.txt SQLite.txt
             echo '```'
