@@ -26,13 +26,13 @@ jobs:
 
       - name: Format results
         run: |
-          grep -E '^(goos|goarch|pkg|cpu|Benchmark.*/Memory)' bench.txt | sed 's|/Memory||' > bench_memory.txt
-          grep -E '^(goos|goarch|pkg|cpu|Benchmark.*/SQLite)' bench.txt | sed 's|/SQLite||' > bench_sqlite.txt
+          grep -E '^(goos|goarch|pkg|cpu|Benchmark.*/Memory)' bench.txt | sed 's|/Memory||' > Memory.txt
+          grep -E '^(goos|goarch|pkg|cpu|Benchmark.*/SQLite)' bench.txt | sed 's|/SQLite||' > SQLite.txt
 
           {
-            echo '## Benchmark Results'
+            echo '## Benchmark Results (localserver: Memory vs SQLite)'
             echo ''
             echo '```'
-            benchstat bench_memory.txt bench_sqlite.txt
+            benchstat Memory.txt SQLite.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
