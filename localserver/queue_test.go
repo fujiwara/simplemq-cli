@@ -46,15 +46,18 @@ func TestMessageExpiration(t *testing.T) {
 	}
 
 	// Return message to queue by waiting past visibility timeout
-	// Then check after expiration
+	// Then check after expiration: receive should skip expired messages
 	_, ok = q.receive(now.Add(6 * time.Second))
 	if ok {
-		t.Error("expected message to be expired and removed")
+		t.Error("expected message to be expired and not receivable")
 	}
 
-	// Verify the queue is actually empty
+	// Verify compact removes expired messages
+	q.mu.Lock()
+	q.compact(now.Add(6 * time.Second))
+	q.mu.Unlock()
 	if len(q.messages) != 0 {
-		t.Errorf("expected 0 messages after expiration, got %d", len(q.messages))
+		t.Errorf("expected 0 messages after compact, got %d", len(q.messages))
 	}
 
 	_ = msg // use msg

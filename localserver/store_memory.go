@@ -42,9 +42,10 @@ func (q *memoryQueue) receive(now time.Time) (storedMessage, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	q.compact(now)
-
 	for _, msg := range q.messages {
+		if now.After(msg.ExpiresAt) {
+			continue
+		}
 		if !msg.VisibilityTimeoutAt.IsZero() && now.Before(msg.VisibilityTimeoutAt) {
 			continue
 		}
@@ -102,6 +103,7 @@ type MemoryStore struct {
 	queues            map[string]*memoryQueue
 	visibilityTimeout time.Duration
 	messageExpiration time.Duration
+	done              chan struct{}
 }
 
 // NewMemoryStore creates a new in-memory Store.
@@ -112,11 +114,14 @@ func NewMemoryStore(visibilityTimeout, messageExpiration time.Duration) *MemoryS
 	if messageExpiration <= 0 {
 		messageExpiration = defaultMessageExpiration
 	}
-	return &MemoryStore{
+	s := &MemoryStore{
 		queues:            make(map[string]*memoryQueue),
 		visibilityTimeout: visibilityTimeout,
 		messageExpiration: messageExpiration,
+		done:              make(chan struct{}),
 	}
+	go s.compactLoop()
+	return s
 }
 
 func (s *MemoryStore) getQueue(name string) *memoryQueue {
@@ -130,6 +135,25 @@ func (s *MemoryStore) getQueue(name string) *memoryQueue {
 		slog.Info("queue created", "queue", name)
 	}
 	return q
+}
+
+func (s *MemoryStore) compactLoop() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-s.done:
+			return
+		case now := <-ticker.C:
+			s.mu.Lock()
+			for _, q := range s.queues {
+				q.mu.Lock()
+				q.compact(now)
+				q.mu.Unlock()
+			}
+			s.mu.Unlock()
+		}
+	}
 }
 
 func (s *MemoryStore) Send(queueName, content string, now time.Time) (storedMessage, error) {
@@ -154,5 +178,6 @@ func (s *MemoryStore) Delete(queueName, id string) error {
 }
 
 func (s *MemoryStore) Close() error {
+	close(s.done)
 	return nil
 }
