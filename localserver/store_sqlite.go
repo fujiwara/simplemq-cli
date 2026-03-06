@@ -43,7 +43,7 @@ func NewSQLiteStore(path string, visibilityTimeout, messageExpiration time.Durat
 		messageExpiration = defaultMessageExpiration
 	}
 
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=5000")
+	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}
