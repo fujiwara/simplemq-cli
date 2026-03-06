@@ -161,7 +161,6 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	q := s.store.getQueue(queueName)
 	now := time.Now()
 
 	body, err := io.ReadAll(r.Body)
@@ -183,7 +182,11 @@ func (s *Server) handleSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := q.send(req.Content, now)
+	msg, err := s.store.Send(queueName, req.Content, now)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	slog.Debug("message sent", "queue", queueName, "message_id", msg.ID)
 	writeJSON(w, http.StatusOK, sendMessageResponse{
 		Result: "success",
@@ -203,10 +206,13 @@ func (s *Server) handleReceive(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	q := s.store.getQueue(queueName)
 	now := time.Now()
 
-	msg, ok := q.receive(now)
+	msg, ok, err := s.store.Receive(queueName, now)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
 	if ok {
 		slog.Debug("message received", "queue", queueName, "message_id", msg.ID)
 	} else {
@@ -241,10 +247,9 @@ func (s *Server) handleExtendTimeout(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	q := s.store.getQueue(queueName)
 	now := time.Now()
 
-	msg, err := q.extendTimeout(messageID, now)
+	msg, err := s.store.ExtendTimeout(queueName, messageID, now)
 	if err != nil {
 		slog.Debug("extend timeout failed", "queue", queueName, "message_id", messageID, "error", err)
 		writeError(w, http.StatusNotFound, err.Error())
@@ -276,9 +281,7 @@ func (s *Server) handleDelete(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	q := s.store.getQueue(queueName)
-
-	if err := q.delete(messageID); err != nil {
+	if err := s.store.Delete(queueName, messageID); err != nil {
 		slog.Debug("delete failed", "queue", queueName, "message_id", messageID, "error", err)
 		writeError(w, http.StatusNotFound, err.Error())
 		return

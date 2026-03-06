@@ -6,7 +6,7 @@ import (
 )
 
 func TestVisibilityTimeoutRevisibility(t *testing.T) {
-	q := newQueue(2*time.Second, time.Hour)
+	q := newMemoryQueue(2*time.Second, time.Hour)
 	now := time.Now()
 
 	q.send("hello", now)
@@ -34,7 +34,7 @@ func TestVisibilityTimeoutRevisibility(t *testing.T) {
 }
 
 func TestMessageExpiration(t *testing.T) {
-	q := newQueue(time.Second, 5*time.Second)
+	q := newMemoryQueue(time.Second, 5*time.Second)
 	now := time.Now()
 
 	q.send("expires soon", now)
@@ -46,15 +46,18 @@ func TestMessageExpiration(t *testing.T) {
 	}
 
 	// Return message to queue by waiting past visibility timeout
-	// Then check after expiration
+	// Then check after expiration: receive should skip expired messages
 	_, ok = q.receive(now.Add(6 * time.Second))
 	if ok {
-		t.Error("expected message to be expired and removed")
+		t.Error("expected message to be expired and not receivable")
 	}
 
-	// Verify the queue is actually empty
+	// Verify compact removes expired messages
+	q.mu.Lock()
+	q.compact(now.Add(6 * time.Second))
+	q.mu.Unlock()
 	if len(q.messages) != 0 {
-		t.Errorf("expected 0 messages after expiration, got %d", len(q.messages))
+		t.Errorf("expected 0 messages after compact, got %d", len(q.messages))
 	}
 
 	_ = msg // use msg
@@ -65,7 +68,8 @@ func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.visibilityTimeout != 5*time.Second {
 		t.Errorf("expected visibility timeout 5s, got %s", q.visibilityTimeout)
 	}
@@ -76,7 +80,8 @@ func TestConfigMessageExpirePropagation(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.messageExpiration != time.Hour {
 		t.Errorf("expected message expiration 1h, got %s", q.messageExpiration)
 	}
@@ -87,7 +92,8 @@ func TestConfigDefaultValues(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.visibilityTimeout != defaultVisibilityTimeout {
 		t.Errorf("expected default visibility timeout %s, got %s", defaultVisibilityTimeout, q.visibilityTimeout)
 	}

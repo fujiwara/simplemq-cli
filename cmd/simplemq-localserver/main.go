@@ -34,7 +34,10 @@ func run(ctx context.Context) error {
 		Color:          true,
 	})))
 
-	handler := localserver.NewHandler(cfg)
+	handler, err := localserver.NewHandler(cfg)
+	if err != nil {
+		return err
+	}
 	srv := &http.Server{
 		Addr:    cfg.Addr,
 		Handler: handler,
@@ -45,7 +48,14 @@ func run(ctx context.Context) error {
 		srv.Shutdown(context.Background())
 	}()
 
-	slog.Info("simplemq-localserver starting", "addr", cfg.Addr)
+	slog.Info("simplemq-localserver starting",
+		"addr", cfg.Addr,
+		"api_key", apiKeyHint(cfg.APIKey),
+		"visibility_timeout", cfg.VisibilityTimeout,
+		"message_expire", cfg.MessageExpire,
+		"database", databaseHint(cfg.Database),
+		"debug", cfg.Debug,
+	)
 	slog.Info("to use with simplemq-cli",
 		"SIMPLEMQ_MESSAGE_API_URL", "http://"+cfg.Addr,
 		"SIMPLEMQ_API_KEY", apiKeyHint(cfg.APIKey),
@@ -58,7 +68,14 @@ func run(ctx context.Context) error {
 
 func apiKeyHint(key string) string {
 	if key == "" {
-		return "dummy (any non-empty value accepted)"
+		return "(any non-empty value accepted)"
 	}
 	return "(configured, use the key you specified)"
+}
+
+func databaseHint(path string) string {
+	if path == "" {
+		return "(in-memory)"
+	}
+	return path
 }

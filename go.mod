@@ -5,7 +5,9 @@ go 1.25.0
 require (
 	github.com/Songmu/prompter v0.5.1
 	github.com/alecthomas/kong v1.14.0
+	github.com/fujiwara/sloghandler v0.1.0
 	github.com/google/uuid v1.6.0
+	github.com/mattn/go-sqlite3 v1.14.34
 	github.com/sacloud/saclient-go v0.3.1
 	github.com/sacloud/simplemq-api-go v0.4.0
 	golang.org/x/sys v0.41.0
@@ -15,7 +17,6 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/fujiwara/sloghandler v0.1.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-faster/errors v0.7.1 // indirect
 	github.com/go-faster/jx v1.2.0 // indirect
