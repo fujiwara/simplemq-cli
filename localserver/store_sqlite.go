@@ -3,6 +3,7 @@
 package localserver
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
@@ -62,6 +63,18 @@ func NewSQLiteStore(path string, visibilityTimeout, messageExpiration time.Durat
 	}, nil
 }
 
+func (s *SQLiteStore) withTx(ctx context.Context, fn func(tx *sql.Tx) error) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	if err := fn(tx); err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
 func (s *SQLiteStore) Send(queueName, content string, now time.Time) (storedMessage, error) {
 	msg := storedMessage{
 		ID:        uuid.New().String(),
@@ -72,56 +85,65 @@ func (s *SQLiteStore) Send(queueName, content string, now time.Time) (storedMess
 	}
 	query := `INSERT INTO messages (id, queue_name, content, created_at, updated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)`
 	args := []any{msg.ID, queueName, msg.Content, msg.CreatedAt.UnixMilli(), msg.UpdatedAt.UnixMilli(), msg.ExpiresAt.UnixMilli()}
-	slog.Debug("sqlite exec", "sql", query, "args", args)
-	_, err := s.db.Exec(query, args...)
+	err := s.withTx(context.Background(), func(tx *sql.Tx) error {
+		slog.Debug("sqlite exec", "sql", query, "args", args)
+		_, err := tx.Exec(query, args...)
+		return err
+	})
 	if err != nil {
 		return storedMessage{}, fmt.Errorf("failed to insert message: %w", err)
 	}
 	return msg, nil
 }
 
-func (s *SQLiteStore) Receive(queueName string, now time.Time) (storedMessage, bool, error) {
-	// Delete expired messages first
-	compactQuery := `DELETE FROM messages WHERE queue_name = ? AND expires_at <= ?`
-	compactArgs := []any{queueName, now.UnixMilli()}
-	slog.Debug("sqlite exec", "sql", compactQuery, "args", compactArgs)
-	if _, err := s.db.Exec(compactQuery, compactArgs...); err != nil {
-		return storedMessage{}, false, fmt.Errorf("failed to compact expired messages: %w", err)
-	}
-
+func (s *SQLiteStore) Receive(queueName string, now time.Time) (msg storedMessage, ok bool, retErr error) {
 	nowMilli := now.UnixMilli()
 	visibilityTimeoutAtMilli := now.Add(s.visibilityTimeout).UnixMilli()
 
-	// Find and atomically update the first available message
-	query := `UPDATE messages SET acquired_at = ?, updated_at = ?, visibility_timeout_at = ?
+	err := s.withTx(context.Background(), func(tx *sql.Tx) error {
+		// Delete expired messages first
+		compactQuery := `DELETE FROM messages WHERE queue_name = ? AND expires_at <= ?`
+		compactArgs := []any{queueName, nowMilli}
+		slog.Debug("sqlite exec", "sql", compactQuery, "args", compactArgs)
+		if _, err := tx.Exec(compactQuery, compactArgs...); err != nil {
+			return fmt.Errorf("failed to compact expired messages: %w", err)
+		}
+
+		// Find and atomically update the first available message
+		query := `UPDATE messages SET acquired_at = ?, updated_at = ?, visibility_timeout_at = ?
 		 WHERE rowid = (
 		     SELECT rowid FROM messages
 		     WHERE queue_name = ? AND expires_at > ? AND (visibility_timeout_at = 0 OR visibility_timeout_at <= ?)
 		     ORDER BY rowid ASC LIMIT 1
 		 )
 		 RETURNING id, content, created_at, updated_at, expires_at, acquired_at, visibility_timeout_at`
-	args := []any{nowMilli, nowMilli, visibilityTimeoutAtMilli, queueName, nowMilli, nowMilli}
-	slog.Debug("sqlite query", "sql", query, "args", args)
-	row := s.db.QueryRow(query, args...)
+		args := []any{nowMilli, nowMilli, visibilityTimeoutAtMilli, queueName, nowMilli, nowMilli}
+		slog.Debug("sqlite query", "sql", query, "args", args)
+		row := tx.QueryRow(query, args...)
 
-	var msg storedMessage
-	var createdAt, updatedAt, expiresAt, acquiredAt, visibilityTimeoutAt int64
-	err := row.Scan(&msg.ID, &msg.Content, &createdAt, &updatedAt, &expiresAt, &acquiredAt, &visibilityTimeoutAt)
-	if err == sql.ErrNoRows {
-		return storedMessage{}, false, nil
-	}
+		var createdAt, updatedAt, expiresAt, acquiredAt, visibilityTimeoutAt int64
+		err := row.Scan(&msg.ID, &msg.Content, &createdAt, &updatedAt, &expiresAt, &acquiredAt, &visibilityTimeoutAt)
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("failed to receive message: %w", err)
+		}
+		msg.CreatedAt = time.UnixMilli(createdAt)
+		msg.UpdatedAt = time.UnixMilli(updatedAt)
+		msg.ExpiresAt = time.UnixMilli(expiresAt)
+		msg.AcquiredAt = time.UnixMilli(acquiredAt)
+		msg.VisibilityTimeoutAt = time.UnixMilli(visibilityTimeoutAt)
+		ok = true
+		return nil
+	})
 	if err != nil {
-		return storedMessage{}, false, fmt.Errorf("failed to receive message: %w", err)
+		return storedMessage{}, false, err
 	}
-	msg.CreatedAt = time.UnixMilli(createdAt)
-	msg.UpdatedAt = time.UnixMilli(updatedAt)
-	msg.ExpiresAt = time.UnixMilli(expiresAt)
-	msg.AcquiredAt = time.UnixMilli(acquiredAt)
-	msg.VisibilityTimeoutAt = time.UnixMilli(visibilityTimeoutAt)
-	return msg, true, nil
+	return msg, ok, nil
 }
 
-func (s *SQLiteStore) ExtendTimeout(queueName, id string, now time.Time) (storedMessage, error) {
+func (s *SQLiteStore) ExtendTimeout(queueName, id string, now time.Time) (msg storedMessage, retErr error) {
 	nowMilli := now.UnixMilli()
 	visibilityTimeoutAtMilli := now.Add(s.visibilityTimeout).UnixMilli()
 
@@ -129,42 +151,50 @@ func (s *SQLiteStore) ExtendTimeout(queueName, id string, now time.Time) (stored
 		 WHERE queue_name = ? AND id = ?
 		 RETURNING id, content, created_at, updated_at, expires_at, acquired_at, visibility_timeout_at`
 	args := []any{visibilityTimeoutAtMilli, nowMilli, queueName, id}
-	slog.Debug("sqlite query", "sql", query, "args", args)
-	row := s.db.QueryRow(query, args...)
 
-	var msg storedMessage
-	var createdAt, updatedAt, expiresAt, acquiredAt, visibilityTimeoutAt int64
-	err := row.Scan(&msg.ID, &msg.Content, &createdAt, &updatedAt, &expiresAt, &acquiredAt, &visibilityTimeoutAt)
-	if err == sql.ErrNoRows {
-		return storedMessage{}, fmt.Errorf("message not found: %s", id)
-	}
+	err := s.withTx(context.Background(), func(tx *sql.Tx) error {
+		slog.Debug("sqlite query", "sql", query, "args", args)
+		row := tx.QueryRow(query, args...)
+
+		var createdAt, updatedAt, expiresAt, acquiredAt, visibilityTimeoutAt int64
+		err := row.Scan(&msg.ID, &msg.Content, &createdAt, &updatedAt, &expiresAt, &acquiredAt, &visibilityTimeoutAt)
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("message not found: %s", id)
+		}
+		if err != nil {
+			return fmt.Errorf("failed to extend timeout: %w", err)
+		}
+		msg.CreatedAt = time.UnixMilli(createdAt)
+		msg.UpdatedAt = time.UnixMilli(updatedAt)
+		msg.ExpiresAt = time.UnixMilli(expiresAt)
+		msg.AcquiredAt = time.UnixMilli(acquiredAt)
+		msg.VisibilityTimeoutAt = time.UnixMilli(visibilityTimeoutAt)
+		return nil
+	})
 	if err != nil {
-		return storedMessage{}, fmt.Errorf("failed to extend timeout: %w", err)
+		return storedMessage{}, err
 	}
-	msg.CreatedAt = time.UnixMilli(createdAt)
-	msg.UpdatedAt = time.UnixMilli(updatedAt)
-	msg.ExpiresAt = time.UnixMilli(expiresAt)
-	msg.AcquiredAt = time.UnixMilli(acquiredAt)
-	msg.VisibilityTimeoutAt = time.UnixMilli(visibilityTimeoutAt)
 	return msg, nil
 }
 
 func (s *SQLiteStore) Delete(queueName, id string) error {
 	query := `DELETE FROM messages WHERE queue_name = ? AND id = ?`
 	args := []any{queueName, id}
-	slog.Debug("sqlite exec", "sql", query, "args", args)
-	result, err := s.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("failed to delete message: %w", err)
-	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to check rows affected: %w", err)
-	}
-	if rows == 0 {
-		return fmt.Errorf("message not found: %s", id)
-	}
-	return nil
+	return s.withTx(context.Background(), func(tx *sql.Tx) error {
+		slog.Debug("sqlite exec", "sql", query, "args", args)
+		result, err := tx.Exec(query, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete message: %w", err)
+		}
+		rows, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("failed to check rows affected: %w", err)
+		}
+		if rows == 0 {
+			return fmt.Errorf("message not found: %s", id)
+		}
+		return nil
+	})
 }
 
 func (s *SQLiteStore) Close() error {
