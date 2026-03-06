@@ -6,7 +6,7 @@ import (
 )
 
 func TestVisibilityTimeoutRevisibility(t *testing.T) {
-	q := newQueue(2*time.Second, time.Hour)
+	q := newMemoryQueue(2*time.Second, time.Hour)
 	now := time.Now()
 
 	q.send("hello", now)
@@ -34,7 +34,7 @@ func TestVisibilityTimeoutRevisibility(t *testing.T) {
 }
 
 func TestMessageExpiration(t *testing.T) {
-	q := newQueue(time.Second, 5*time.Second)
+	q := newMemoryQueue(time.Second, 5*time.Second)
 	now := time.Now()
 
 	q.send("expires soon", now)
@@ -65,7 +65,8 @@ func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.visibilityTimeout != 5*time.Second {
 		t.Errorf("expected visibility timeout 5s, got %s", q.visibilityTimeout)
 	}
@@ -76,7 +77,8 @@ func TestConfigMessageExpirePropagation(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.messageExpiration != time.Hour {
 		t.Errorf("expected message expiration 1h, got %s", q.messageExpiration)
 	}
@@ -87,7 +89,8 @@ func TestConfigDefaultValues(t *testing.T) {
 	s := NewServer(cfg)
 	defer s.Close()
 
-	q := s.store.getQueue("test-queue")
+	ms := s.store.(*MemoryStore)
+	q := ms.getQueue("test-queue")
 	if q.visibilityTimeout != defaultVisibilityTimeout {
 		t.Errorf("expected default visibility timeout %s, got %s", defaultVisibilityTimeout, q.visibilityTimeout)
 	}
