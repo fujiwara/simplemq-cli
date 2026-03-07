@@ -85,6 +85,30 @@ simplemq-cli message receive --queue myqueue --api-key <api-key> --auto-delete
 simplemq-cli message delete --queue myqueue --api-key <api-key> <message-id>
 ```
 
+### Message Format
+
+**Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. By default, this CLI automatically encodes/decodes message content using Base64. Use `--raw` flag to disable this behavior.
+
+Received messages are output as JSON to stdout.
+
+For example:
+```json
+{
+  "id": "019adef1-91d4-7aac-ad68-2e1a5c881e95",
+  "content": "こんにちは世界",
+  "created_at": "2025-12-02T21:02:44.82+09:00",
+  "updated_at": "2025-12-02T21:02:47.11+09:00",
+  "expires_at": "2025-12-06T21:02:44.82+09:00",
+  "acquired_at": "2025-12-02T21:02:47.11+09:00",
+  "visibility_timeout_at": "2025-12-02T21:03:17.11+09:00"
+}
+```
+
+If `--raw` flag is specified, the raw message from SimpleMQ API is output without Base64 decoding and time conversion.
+```json
+{"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
+```
+
 ### Queue Management
 
 Queue management commands require `SAKURA_ACCESS_TOKEN` and `SAKURA_ACCESS_TOKEN_SECRET` environment variables for authentication.
@@ -149,28 +173,6 @@ simplemq-cli queue purge --queue myqueue
 simplemq-cli queue purge --queue myqueue -f
 ```
 
-**Note:** SimpleMQ API only accepts message content matching `^[0-9a-zA-Z+/=]*$`. By default, this CLI automatically encodes/decodes message content using Base64. Use `--raw` flag to disable this behavior.
-
-Received messages are output as JSON to stdout.
-
-For example:
-```json
-{
-  "id": "019adef1-91d4-7aac-ad68-2e1a5c881e95",
-  "content": "こんにちは世界",
-  "created_at": "2025-12-02T21:02:44.82+09:00",
-  "updated_at": "2025-12-02T21:02:47.11+09:00",
-  "expires_at": "2025-12-06T21:02:44.82+09:00",
-  "acquired_at": "2025-12-02T21:02:47.11+09:00",
-  "visibility_timeout_at": "2025-12-02T21:03:17.11+09:00"
-}
-```
-
-If `--raw` flag is specified, the raw message from SimpleMQ API is output without Base64 decoding and time conversion.
-```json
-{"id":"019adf15-f115-7efd-942c-423a6b6a2250","content":"44GT44KT44Gr44Gh44Gv5LiW55WM","created_at":1764679348501,"updated_at":1764679355018,"expires_at":1765024948501,"acquired_at":1764679355018,"visibility_timeout_at":1764679385018}
-```
-
 ## Options
 
 ### Message Options
@@ -181,10 +183,6 @@ If `--raw` flag is specified, the raw message from SimpleMQ API is output withou
 | `--api-key` | `SIMPLEMQ_API_KEY` | API Key (required) |
 | `--raw` | `SIMPLEMQ_RAW` | Handle raw message without Base64 encoding/decoding (default: false) |
 
-### Send Options
-
-No additional options for sending messages.
-
 ### Receive Options
 
 | Option | Environment Variable | Default | Description |
@@ -193,10 +191,6 @@ No additional options for sending messages.
 | `--count` | `SIMPLEMQ_RECEIVE_COUNT` | 1 | Number of messages to receive |
 | `--auto-delete` | `SIMPLEMQ_AUTO_DELETE` | false | Automatically delete messages after receiving |
 | `--interval` | `SIMPLEMQ_POLLING_INTERVAL` | 1s | Polling interval |
-
-### Delete Options
-
-No additional options for deleting messages.
 
 ### Queue Options
 
@@ -230,6 +224,18 @@ Queue commands require the following environment variables for authentication:
 | Option | Environment Variable | Default | Description |
 |--------|---------------------|---------|-------------|
 | `-f`, `--force` | `SIMPLEMQ_FORCE` | false | Force operation without confirmation prompt |
+
+## API Request Rate Limit
+
+The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of **5 requests per second** by default (200ms interval between requests). This applies to all API calls including send, receive, and delete operations.
+
+For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
+
+When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
+
+```bash
+export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
+```
 
 ## Local Server for Development and Testing
 
@@ -287,19 +293,7 @@ simplemq-cli message send --queue myqueue "Hello from localserver!"
 simplemq-cli message receive --queue myqueue
 ```
 
-### API Request Rate Limit
-
-The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of **5 requests per second** by default (200ms interval between requests). This applies to all API calls including send, receive, and delete operations.
-
-When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
-
-```bash
-export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
-```
-
-For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
-
-Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
+Queues are created automatically on first access. When using in-memory storage (default), all data is lost when the server stops. Use `--database` with SQLite for persistent storage.
 
 The server logs each request with method, path, status code, and masked authorization header. Use `--debug` for additional detail such as message IDs and queue operations.
 
