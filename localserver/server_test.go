@@ -39,10 +39,10 @@ func b64(s string) string {
 const nonexistentUUID = "00000000-0000-0000-0000-000000000000"
 
 func TestSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL(), "test-api-key")
+	client := newTestClient(t, srv.TestURL(), "test-api-key")
 	ctx := context.Background()
 	queueName := "test-queue"
 	content := b64("hello")
@@ -114,10 +114,10 @@ func TestSendReceiveDelete(t *testing.T) {
 }
 
 func TestEmptyReceive(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL(), "test-api-key")
+	client := newTestClient(t, srv.TestURL(), "test-api-key")
 	ctx := context.Background()
 
 	recvRes, err := client.ReceiveMessage(ctx, message.ReceiveMessageParams{QueueName: "empty-queue"})
@@ -134,10 +134,10 @@ func TestEmptyReceive(t *testing.T) {
 }
 
 func TestDeleteNotFound(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL(), "test-api-key")
+	client := newTestClient(t, srv.TestURL(), "test-api-key")
 	ctx := context.Background()
 
 	delRes, err := client.DeleteMessage(ctx, message.DeleteMessageParams{
@@ -153,11 +153,11 @@ func TestDeleteNotFound(t *testing.T) {
 }
 
 func TestUnauthorized(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
 	// Use empty token to trigger 401
-	client := newTestClient(t, srv.URL(), "")
+	client := newTestClient(t, srv.TestURL(), "")
 	ctx := context.Background()
 
 	sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(b64("hello"))}, message.SendMessageParams{QueueName: "test-queue"})
@@ -170,7 +170,7 @@ func TestUnauthorized(t *testing.T) {
 }
 
 func TestAPIKeyValidation(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{APIKey: "correct-key"})
+	srv := localserver.NewTestServer(localserver.Config{APIKey: "correct-key"})
 	defer srv.Close()
 
 	ctx := context.Background()
@@ -178,7 +178,7 @@ func TestAPIKeyValidation(t *testing.T) {
 	content := b64("hello")
 
 	t.Run("correct key accepted", func(t *testing.T) {
-		client := newTestClient(t, srv.URL(), "correct-key")
+		client := newTestClient(t, srv.TestURL(), "correct-key")
 		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
 		if err != nil {
 			t.Fatalf("send failed: %v", err)
@@ -189,7 +189,7 @@ func TestAPIKeyValidation(t *testing.T) {
 	})
 
 	t.Run("wrong key rejected", func(t *testing.T) {
-		client := newTestClient(t, srv.URL(), "wrong-key")
+		client := newTestClient(t, srv.TestURL(), "wrong-key")
 		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
 		if err != nil {
 			t.Fatalf("send request failed: %v", err)
@@ -200,7 +200,7 @@ func TestAPIKeyValidation(t *testing.T) {
 	})
 
 	t.Run("empty key rejected", func(t *testing.T) {
-		client := newTestClient(t, srv.URL(), "")
+		client := newTestClient(t, srv.TestURL(), "")
 		sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
 		if err != nil {
 			t.Fatalf("send request failed: %v", err)
@@ -212,7 +212,7 @@ func TestAPIKeyValidation(t *testing.T) {
 }
 
 func TestNoAPIKeyAcceptsAny(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
 	ctx := context.Background()
@@ -220,7 +220,7 @@ func TestNoAPIKeyAcceptsAny(t *testing.T) {
 	content := b64("hello")
 
 	// Any non-empty key should be accepted when no API key is configured
-	client := newTestClient(t, srv.URL(), "any-random-key")
+	client := newTestClient(t, srv.TestURL(), "any-random-key")
 	sendRes, err := client.SendMessage(ctx, &message.SendRequest{Content: message.MessageContent(content)}, message.SendMessageParams{QueueName: message.QueueName(queueName)})
 	if err != nil {
 		t.Fatalf("send failed: %v", err)
@@ -231,10 +231,10 @@ func TestNoAPIKeyAcceptsAny(t *testing.T) {
 }
 
 func TestExtendTimeout(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL(), "test-api-key")
+	client := newTestClient(t, srv.TestURL(), "test-api-key")
 	ctx := context.Background()
 	queueName := "test-queue"
 
@@ -284,10 +284,10 @@ func TestExtendTimeout(t *testing.T) {
 }
 
 func TestVisibilityTimeout(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL(), "test-api-key")
+	client := newTestClient(t, srv.TestURL(), "test-api-key")
 	ctx := context.Background()
 	queueName := "test-queue"
 
@@ -350,7 +350,7 @@ func doRequest(t *testing.T, method, url, token, body string) (int, map[string]a
 }
 
 func TestValidationQueueName(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {
@@ -366,7 +366,7 @@ func TestValidationQueueName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test send
-			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), tt.queueName)
+			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.TestURL(), tt.queueName)
 			status, _ := doRequest(t, "POST", url, "test-api-key", `{"content":"aGVsbG8="}`)
 			if status != http.StatusBadRequest {
 				t.Errorf("send: expected 400, got %d", status)
@@ -382,7 +382,7 @@ func TestValidationQueueName(t *testing.T) {
 }
 
 func TestValidationMessageContent(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {
@@ -394,7 +394,7 @@ func TestValidationMessageContent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.URL(), "valid-queue")
+			url := fmt.Sprintf("%s/v1/queues/%s/messages", srv.TestURL(), "valid-queue")
 			body := fmt.Sprintf(`{"content":"%s"}`, tt.content)
 			status, _ := doRequest(t, "POST", url, "test-api-key", body)
 			if status != http.StatusBadRequest {
@@ -405,7 +405,7 @@ func TestValidationMessageContent(t *testing.T) {
 }
 
 func TestValidationMessageID(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 
 	tests := []struct {
@@ -419,7 +419,7 @@ func TestValidationMessageID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test delete
-			url := fmt.Sprintf("%s/v1/queues/%s/messages/%s", srv.URL(), "valid-queue", tt.messageID)
+			url := fmt.Sprintf("%s/v1/queues/%s/messages/%s", srv.TestURL(), "valid-queue", tt.messageID)
 			status, _ := doRequest(t, "DELETE", url, "test-api-key", "")
 			if status != http.StatusBadRequest {
 				t.Errorf("delete: expected 400, got %d", status)

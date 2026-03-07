@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,6 +34,7 @@ type SQLiteStore struct {
 	visibilityTimeout time.Duration
 	messageExpiration time.Duration
 	done              chan struct{}
+	closeOnce         sync.Once
 }
 
 // NewSQLiteStore opens (or creates) the SQLite database at path and returns a Store.
@@ -73,10 +75,15 @@ func (s *SQLiteStore) withTx(ctx context.Context, fn func(tx *sql.Tx) error) err
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	if err := fn(tx); err != nil {
-		tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf("%w; rollback failed: %v", err, rbErr)
+		}
 		return err
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	return nil
 }
 
 func (s *SQLiteStore) Send(queueName, content string, now time.Time) (storedMessage, error) {
@@ -204,12 +211,18 @@ func (s *SQLiteStore) compactLoop() {
 			query := `DELETE FROM messages WHERE expires_at <= ?`
 			args := []any{now.UnixMilli()}
 			slog.Debug("sqlite compact", "sql", query, "args", args)
-			s.db.Exec(query, args...)
+			if _, err := s.db.Exec(query, args...); err != nil {
+				slog.Error("sqlite compact failed", "err", err)
+			}
 		}
 	}
 }
 
 func (s *SQLiteStore) Close() error {
-	close(s.done)
-	return s.db.Close()
+	var err error
+	s.closeOnce.Do(func() {
+		close(s.done)
+		err = s.db.Close()
+	})
+	return err
 }

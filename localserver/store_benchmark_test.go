@@ -20,8 +20,8 @@ func init() {
 
 func newBenchmarkServer(b *testing.B, database string) (*localserver.Server, *message.Client) {
 	b.Helper()
-	srv := localserver.NewServer(localserver.Config{Database: database})
-	client, err := message.NewClient(srv.URL(), &testSecuritySource{token: "bench"})
+	srv := localserver.NewTestServer(localserver.Config{Database: database})
+	client, err := message.NewClient(srv.TestURL(), &testSecuritySource{token: "bench"})
 	if err != nil {
 		b.Fatalf("failed to create client: %v", err)
 	}

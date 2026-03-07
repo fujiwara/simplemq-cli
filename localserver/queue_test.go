@@ -65,7 +65,7 @@ func TestMessageExpiration(t *testing.T) {
 
 func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
 	cfg := Config{VisibilityTimeout: 5 * time.Second}
-	s := NewServer(cfg)
+	s := NewTestServer(cfg)
 	defer s.Close()
 
 	ms := s.store.(*MemoryStore)
@@ -77,7 +77,7 @@ func TestConfigVisibilityTimeoutPropagation(t *testing.T) {
 
 func TestConfigMessageExpirePropagation(t *testing.T) {
 	cfg := Config{MessageExpire: time.Hour}
-	s := NewServer(cfg)
+	s := NewTestServer(cfg)
 	defer s.Close()
 
 	ms := s.store.(*MemoryStore)
@@ -89,7 +89,7 @@ func TestConfigMessageExpirePropagation(t *testing.T) {
 
 func TestConfigDefaultValues(t *testing.T) {
 	cfg := Config{}
-	s := NewServer(cfg)
+	s := NewTestServer(cfg)
 	defer s.Close()
 
 	ms := s.store.(*MemoryStore)

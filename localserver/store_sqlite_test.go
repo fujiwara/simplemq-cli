@@ -80,21 +80,32 @@ func TestSQLiteStoreVisibilityTimeoutRevisibility(t *testing.T) {
 	now := time.Now().Truncate(time.Millisecond)
 	queueName := "test-queue"
 
-	store.Send(queueName, "hello", now)
+	if _, err = store.Send(queueName, "hello", now); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
 
-	msg, ok, _ := store.Receive(queueName, now)
+	msg, ok, err := store.Receive(queueName, now)
+	if err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 	if !ok {
 		t.Fatal("expected to receive a message")
 	}
 
 	// Within timeout
-	_, ok, _ = store.Receive(queueName, now.Add(1*time.Second))
+	_, ok, err = store.Receive(queueName, now.Add(1*time.Second))
+	if err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 	if ok {
 		t.Error("expected no message within visibility timeout")
 	}
 
 	// After timeout
-	msg2, ok, _ := store.Receive(queueName, now.Add(3*time.Second))
+	msg2, ok, err := store.Receive(queueName, now.Add(3*time.Second))
+	if err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 	if !ok {
 		t.Fatal("expected message to be visible again after timeout")
 	}
@@ -114,16 +125,24 @@ func TestSQLiteStoreMessageExpiration(t *testing.T) {
 	now := time.Now().Truncate(time.Millisecond)
 	queueName := "test-queue"
 
-	store.Send(queueName, "expires soon", now)
+	if _, err = store.Send(queueName, "expires soon", now); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
 
 	// Before expiration
-	_, ok, _ := store.Receive(queueName, now.Add(4*time.Second))
+	_, ok, err := store.Receive(queueName, now.Add(4*time.Second))
+	if err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 	if !ok {
 		t.Fatal("expected to receive message before expiration")
 	}
 
 	// After expiration (and past visibility timeout)
-	_, ok, _ = store.Receive(queueName, now.Add(6*time.Second))
+	_, ok, err = store.Receive(queueName, now.Add(6*time.Second))
+	if err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 	if ok {
 		t.Error("expected message to be expired and removed")
 	}
@@ -140,8 +159,13 @@ func TestSQLiteStoreExtendTimeout(t *testing.T) {
 	now := time.Now().Truncate(time.Millisecond)
 	queueName := "test-queue"
 
-	msg, _ := store.Send(queueName, "hello", now)
-	store.Receive(queueName, now)
+	msg, err := store.Send(queueName, "hello", now)
+	if err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+	if _, _, err := store.Receive(queueName, now); err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
 
 	extended, err := store.ExtendTimeout(queueName, msg.ID, now.Add(10*time.Second))
 	if err != nil {
@@ -168,21 +192,34 @@ func TestSQLiteStoreMultipleQueues(t *testing.T) {
 
 	now := time.Now().Truncate(time.Millisecond)
 
-	store.Send("queue-a", "msg-a", now)
-	store.Send("queue-b", "msg-b", now)
+	if _, err = store.Send("queue-a", "msg-a", now); err != nil {
+		t.Fatalf("send to queue-a failed: %v", err)
+	}
+	if _, err = store.Send("queue-b", "msg-b", now); err != nil {
+		t.Fatalf("send to queue-b failed: %v", err)
+	}
 
-	msgA, ok, _ := store.Receive("queue-a", now)
+	msgA, ok, err := store.Receive("queue-a", now)
+	if err != nil {
+		t.Fatalf("receive from queue-a failed: %v", err)
+	}
 	if !ok || msgA.Content != "msg-a" {
 		t.Errorf("expected msg-a from queue-a, got %v", msgA.Content)
 	}
 
-	msgB, ok, _ := store.Receive("queue-b", now)
+	msgB, ok, err := store.Receive("queue-b", now)
+	if err != nil {
+		t.Fatalf("receive from queue-b failed: %v", err)
+	}
 	if !ok || msgB.Content != "msg-b" {
 		t.Errorf("expected msg-b from queue-b, got %v", msgB.Content)
 	}
 
 	// queue-a should be empty now (visibility timeout)
-	_, ok, _ = store.Receive("queue-a", now)
+	_, ok, err = store.Receive("queue-a", now)
+	if err != nil {
+		t.Fatalf("receive from queue-a failed: %v", err)
+	}
 	if ok {
 		t.Error("expected no more messages in queue-a")
 	}
@@ -197,7 +234,10 @@ func TestSQLiteStorePersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create sqlite store: %v", err)
 	}
-	msg, _ := store1.Send("test-queue", "persistent", now)
+	msg, err := store1.Send("test-queue", "persistent", now)
+	if err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
 	store1.Close()
 
 	// Read with second store instance

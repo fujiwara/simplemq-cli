@@ -38,6 +38,8 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer handler.Close()
+
 	srv := &http.Server{
 		Addr:    cfg.Addr,
 		Handler: handler,
