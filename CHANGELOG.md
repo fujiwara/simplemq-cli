@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.6.1](https://github.com/fujiwara/simplemq-cli/compare/v0.6.0...v0.6.1) - 2026-03-07
+- Address review comments from PR #47 by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/48
+- Improve README structure and add coding guidelines to CLAUDE.md by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/50
+
 ## [v0.6.0](https://github.com/fujiwara/simplemq-cli/compare/v0.5.0...v0.6.0) - 2026-03-06
 - Add API request rate limit documentation by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/44
 - Add --queue-id option to queue commands by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/46
