@@ -1,5 +1,3 @@
-//go:build sqlite
-
 package localserver_test
 
 import (

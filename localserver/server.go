@@ -12,7 +12,7 @@ type Config struct {
 	Addr              string        `help:"Listen address" default:"127.0.0.1:18080" env:"SIMPLEMQ_LOCALSERVER_ADDR"`
 	VisibilityTimeout time.Duration `help:"Visibility timeout" default:"30s" env:"SIMPLEMQ_VISIBILITY_TIMEOUT"`
 	MessageExpire     time.Duration `help:"Message expire time" default:"96h" env:"SIMPLEMQ_MESSAGE_EXPIRE"`
-	Database          string        `help:"SQLite database path for persistent storage (requires sqlite build tag)" env:"SIMPLEMQ_DATABASE"`
+	Database          string        `help:"SQLite database path for persistent storage" env:"SIMPLEMQ_DATABASE"`
 	Debug             bool          `help:"Enable debug mode" env:"SIMPLEMQ_DEBUG" default:"false"`
 }
 
