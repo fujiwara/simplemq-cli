@@ -231,6 +231,18 @@ Queue commands require the following environment variables for authentication:
 |--------|---------------------|---------|-------------|
 | `-f`, `--force` | `SIMPLEMQ_FORCE` | false | Force operation without confirmation prompt |
 
+## API Request Rate Limit
+
+The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of **5 requests per second** by default (200ms interval between requests). This applies to all API calls including send, receive, and delete operations.
+
+For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
+
+When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
+
+```bash
+export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
+```
+
 ## Local Server for Development and Testing
 
 `simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory storage. Optionally, SQLite can be used for persistent storage (requires `sqlite` build tag).
@@ -286,18 +298,6 @@ simplemq-cli message send --queue myqueue "Hello from localserver!"
 # Receive the message
 simplemq-cli message receive --queue myqueue
 ```
-
-### API Request Rate Limit
-
-The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of **5 requests per second** by default (200ms interval between requests). This applies to all API calls including send, receive, and delete operations.
-
-When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
-
-```bash
-export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
-```
-
-For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
 
 Queues are created automatically on first access. All data is stored in memory and lost when the server stops.
 
