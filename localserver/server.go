@@ -39,9 +39,9 @@ func NewHandler(cfg Config) (*Server, error) {
 	return s, nil
 }
 
-// NewServer creates and starts a new local SimpleMQ test server using httptest.
+// NewTestServer creates and starts a new local SimpleMQ test server using httptest.
 // If cfg.APIKey is non-empty, the server validates that incoming requests use this key.
-func NewServer(cfg Config) *Server {
+func NewTestServer(cfg Config) *Server {
 	s, err := NewHandler(cfg)
 	if err != nil {
 		panic(err)
@@ -50,13 +50,15 @@ func NewServer(cfg Config) *Server {
 	return s
 }
 
-// URL returns the base URL of the test server.
-func (s *Server) URL() string {
+// TestURL returns the base URL of the test server.
+func (s *Server) TestURL() string {
 	return s.httpServer.URL
 }
 
-// Close shuts down the test server and closes the store.
+// Close shuts down the test server (if running) and closes the store.
 func (s *Server) Close() {
-	s.httpServer.Close()
+	if s.httpServer != nil {
+		s.httpServer.Close()
+	}
 	s.store.Close()
 }

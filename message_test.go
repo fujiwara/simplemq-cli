@@ -29,11 +29,11 @@ func resetOutput(c *CLI) {
 }
 
 func TestMessageSendAndReceive(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
-	c := newTestCLI(srv.URL(), "test-queue")
+	c := newTestCLI(srv.TestURL(), "test-queue")
 	c.Message.Send = &SendMessageCommand{Content: "hello world"}
 
 	if err := runSendMessageCommand(ctx, c); err != nil {
@@ -59,11 +59,11 @@ func TestMessageSendAndReceive(t *testing.T) {
 }
 
 func TestMessageReceiveEmpty(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
-	c := newTestCLI(srv.URL(), "empty-queue")
+	c := newTestCLI(srv.TestURL(), "empty-queue")
 	c.Message.Receive = &ReceiveMessageCommand{Count: 1}
 
 	if err := runReceiveMessageCommand(ctx, c); err != nil {
@@ -76,11 +76,11 @@ func TestMessageReceiveEmpty(t *testing.T) {
 }
 
 func TestMessageSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
-	c := newTestCLI(srv.URL(), "test-queue")
+	c := newTestCLI(srv.TestURL(), "test-queue")
 	c.Message.Send = &SendMessageCommand{Content: "delete me"}
 
 	if err := runSendMessageCommand(ctx, c); err != nil {
@@ -112,11 +112,11 @@ func TestMessageSendReceiveDelete(t *testing.T) {
 }
 
 func TestMessageReceiveAutoDelete(t *testing.T) {
-	srv := localserver.NewServer(localserver.Config{})
+	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
-	c := newTestCLI(srv.URL(), "test-queue")
+	c := newTestCLI(srv.TestURL(), "test-queue")
 	c.Message.Send = &SendMessageCommand{Content: "auto delete me"}
 
 	if err := runSendMessageCommand(ctx, c); err != nil {

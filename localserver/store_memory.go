@@ -104,6 +104,7 @@ type MemoryStore struct {
 	visibilityTimeout time.Duration
 	messageExpiration time.Duration
 	done              chan struct{}
+	closeOnce         sync.Once
 }
 
 // NewMemoryStore creates a new in-memory Store.
@@ -178,6 +179,8 @@ func (s *MemoryStore) Delete(queueName, id string) error {
 }
 
 func (s *MemoryStore) Close() error {
-	close(s.done)
+	s.closeOnce.Do(func() {
+		close(s.done)
+	})
 	return nil
 }
