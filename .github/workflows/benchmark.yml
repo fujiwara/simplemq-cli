@@ -27,7 +27,7 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          go test -tags sqlite -bench=. -count=6 -benchmem ./localserver/ -run='^$' > bench.txt 2>&1
+          go test -bench=. -count=6 -benchmem ./localserver/ -run='^$' > bench.txt 2>&1
 
       - name: Format results
         run: |
