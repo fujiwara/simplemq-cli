@@ -4,7 +4,7 @@ simplemq-cli: go.* *.go cmd/simplemq-cli/*.go
 	go build -o $@ ./cmd/simplemq-cli
 
 simplemq-localserver: go.* *.go cmd/simplemq-localserver/*.go localserver/*.go
-	go build -tags sqlite -o $@ ./cmd/simplemq-localserver
+	go build -o $@ ./cmd/simplemq-localserver
 
 clean:
 	rm -rf simplemq-cli simplemq-localserver dist/

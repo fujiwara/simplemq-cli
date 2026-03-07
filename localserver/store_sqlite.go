@@ -1,5 +1,3 @@
-//go:build sqlite
-
 package localserver
 
 import (
@@ -11,7 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 const createTableSQL = `
@@ -46,7 +44,7 @@ func NewSQLiteStore(path string, visibilityTimeout, messageExpiration time.Durat
 		messageExpiration = defaultMessageExpiration
 	}
 
-	db, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL")
+	db, err := sql.Open("sqlite", path+"?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)")
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}

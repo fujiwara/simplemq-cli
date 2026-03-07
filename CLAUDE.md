@@ -51,7 +51,7 @@ Configuration can be via flags or environment variables (SIMPLEMQ_QUEUE_NAME, SI
 
 - `cmd/simplemq-localserver/` - SimpleMQ-compatible local server for development/testing
 - `localserver/` - Server implementation with pluggable Store interface (MemoryStore / SQLiteStore)
-- SQLiteStore is behind `sqlite` build tag. Run tests with both `go test ./...` and `go test -tags sqlite ./...`
+- SQLiteStore uses `modernc.org/sqlite` (pure Go, no CGO required). No build tags needed.
 
 ## Coding Guidelines
 

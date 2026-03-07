@@ -239,7 +239,7 @@ export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
 
 ## Local Server for Development and Testing
 
-`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory storage. Optionally, SQLite can be used for persistent storage (requires `sqlite` build tag).
+`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory or SQLite-backed persistent storage.
 
 ### Install and Start
 
@@ -257,7 +257,7 @@ simplemq-localserver
 | `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
 | `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
 | `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
-| `--database` | `SIMPLEMQ_DATABASE` | (empty) | SQLite database path for persistent storage (requires `sqlite` build tag) |
+| `--database` | `SIMPLEMQ_DATABASE` | (empty) | SQLite database path for persistent storage |
 | `--debug` | `SIMPLEMQ_DEBUG` | `false` | Enable debug mode (detailed request logging) |
 
 ```bash
@@ -273,8 +273,7 @@ simplemq-localserver --visibility-timeout 10s --message-expire 1h
 # Enable debug logging
 simplemq-localserver --debug
 
-# Use SQLite for persistent storage (requires sqlite build tag)
-go build -tags sqlite -o simplemq-localserver ./cmd/simplemq-localserver
+# Use SQLite for persistent storage
 simplemq-localserver --database ./messages.db
 ```
 

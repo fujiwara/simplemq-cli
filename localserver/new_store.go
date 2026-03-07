@@ -1,17 +1,14 @@
-//go:build !sqlite
-
 package localserver
 
 import (
-	"fmt"
 	"time"
 )
 
-// NewStore creates a new in-memory Store.
-// If database is specified, it returns an error because sqlite build tag is not enabled.
+// NewStore creates a Store based on configuration.
+// If database is non-empty, a SQLite-backed store is created; otherwise in-memory.
 func NewStore(visibilityTimeout, messageExpiration time.Duration, database string) (Store, error) {
 	if database != "" {
-		return nil, fmt.Errorf("--database is specified but sqlite build tag is not enabled; rebuild with -tags sqlite")
+		return NewSQLiteStore(database, visibilityTimeout, messageExpiration)
 	}
 	return NewMemoryStore(visibilityTimeout, messageExpiration), nil
 }
