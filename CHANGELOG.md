@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.7.1](https://github.com/fujiwara/simplemq-cli/compare/v0.7.0...v0.7.1) - 2026-03-09
+- Update simplemq-api-go to v0.5.0 by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/54
+
 ## [v0.7.0](https://github.com/fujiwara/simplemq-cli/compare/v0.6.1...v0.7.0) - 2026-03-07
 - Switch SQLite driver to modernc.org/sqlite (pure Go, no CGO) by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/52
 
