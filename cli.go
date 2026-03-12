@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/alecthomas/kong"
 )
@@ -15,6 +16,14 @@ type CLI struct {
 	Queue   *QueueCommand   `cmd:"" help:"Queue related commands"`
 
 	w io.Writer `kong:"-"`
+	r io.Reader `kong:"-"`
+}
+
+func (c *CLI) stdinReader() io.Reader {
+	if c.r != nil {
+		return c.r
+	}
+	return os.Stdin
 }
 
 type MessageCommand struct {

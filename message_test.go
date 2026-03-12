@@ -111,6 +111,112 @@ func TestMessageSendReceiveDelete(t *testing.T) {
 	}
 }
 
+func TestMessageSendStdin(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	c := newTestCLI(srv.TestURL(), "test-stdin")
+	c.r = strings.NewReader("hello from stdin")
+	c.Message.Send = &SendMessageCommand{Stdin: true}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
+	c.Message.Receive = &ReceiveMessageCommand{Count: 1}
+	if err := runReceiveMessageCommand(ctx, c); err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
+
+	output := outputString(c)
+	var msg Message
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &msg); err != nil {
+		t.Fatalf("failed to unmarshal output: %v\noutput: %s", err, output)
+	}
+	if msg.Content != "hello from stdin" {
+		t.Errorf("expected content 'hello from stdin', got %q", msg.Content)
+	}
+}
+
+func TestMessageSendEachLine(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	c := newTestCLI(srv.TestURL(), "test-each-line")
+	c.r = strings.NewReader("msg1\nmsg2\nmsg3\n")
+	c.Message.Send = &SendMessageCommand{Stdin: true, EachLine: true}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
+	// Receive all 3 messages
+	var messages []Message
+	for i := 0; i < 3; i++ {
+		resetOutput(c)
+		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
+		if err := runReceiveMessageCommand(ctx, c); err != nil {
+			t.Fatalf("receive %d failed: %v", i, err)
+		}
+		output := strings.TrimSpace(outputString(c))
+		if output == "" {
+			t.Fatalf("expected message %d, got empty output", i)
+		}
+		var msg Message
+		if err := json.Unmarshal([]byte(output), &msg); err != nil {
+			t.Fatalf("failed to unmarshal message %d: %v", i, err)
+		}
+		messages = append(messages, msg)
+	}
+	expected := []string{"msg1", "msg2", "msg3"}
+	for i, msg := range messages {
+		if msg.Content != expected[i] {
+			t.Errorf("message[%d] content = %q, want %q", i, msg.Content, expected[i])
+		}
+	}
+}
+
+func TestMessageSendEachJSON(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	c := newTestCLI(srv.TestURL(), "test-each-json")
+	c.r = strings.NewReader(`{"a":1} {"b":2}`)
+	c.Message.Send = &SendMessageCommand{Stdin: true, EachJSON: true}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
+	// Receive 2 messages
+	var messages []Message
+	for i := 0; i < 2; i++ {
+		resetOutput(c)
+		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
+		if err := runReceiveMessageCommand(ctx, c); err != nil {
+			t.Fatalf("receive %d failed: %v", i, err)
+		}
+		output := strings.TrimSpace(outputString(c))
+		if output == "" {
+			t.Fatalf("expected message %d, got empty output", i)
+		}
+		var msg Message
+		if err := json.Unmarshal([]byte(output), &msg); err != nil {
+			t.Fatalf("failed to unmarshal message %d: %v", i, err)
+		}
+		messages = append(messages, msg)
+	}
+	if messages[0].Content != `{"a":1}` {
+		t.Errorf("message[0] content = %q, want %q", messages[0].Content, `{"a":1}`)
+	}
+	if messages[1].Content != `{"b":2}` {
+		t.Errorf("message[1] content = %q, want %q", messages[1].Content, `{"b":2}`)
+	}
+}
+
 func TestMessageReceiveAutoDelete(t *testing.T) {
 	srv := localserver.NewTestServer(localserver.Config{})
 	defer srv.Close()

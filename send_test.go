@@ -7,6 +7,118 @@ import (
 	"testing"
 )
 
+func TestSendMessageCommandValidate(t *testing.T) {
+	tests := []struct {
+		name    string
+		cmd     SendMessageCommand
+		wantErr string
+	}{
+		{
+			name:    "content arg only",
+			cmd:     SendMessageCommand{Content: "hello"},
+			wantErr: "",
+		},
+		{
+			name:    "stdin only",
+			cmd:     SendMessageCommand{Stdin: true},
+			wantErr: "",
+		},
+		{
+			name:    "stdin with each-line",
+			cmd:     SendMessageCommand{Stdin: true, EachLine: true},
+			wantErr: "",
+		},
+		{
+			name:    "stdin with each-json",
+			cmd:     SendMessageCommand{Stdin: true, EachJSON: true},
+			wantErr: "",
+		},
+		{
+			name:    "no content no stdin",
+			cmd:     SendMessageCommand{},
+			wantErr: "<content> argument or --stdin is required",
+		},
+		{
+			name:    "stdin and content",
+			cmd:     SendMessageCommand{Stdin: true, Content: "hello"},
+			wantErr: "--stdin and <content> argument are mutually exclusive",
+		},
+		{
+			name:    "each-line without stdin",
+			cmd:     SendMessageCommand{EachLine: true, Content: "hello"},
+			wantErr: "--each-line requires --stdin",
+		},
+		{
+			name:    "each-json without stdin",
+			cmd:     SendMessageCommand{EachJSON: true, Content: "hello"},
+			wantErr: "--each-json requires --stdin",
+		},
+		{
+			name:    "each-line and each-json",
+			cmd:     SendMessageCommand{Stdin: true, EachLine: true, EachJSON: true},
+			wantErr: "--each-line and --each-json are mutually exclusive",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.cmd.Validate()
+			if tt.wantErr == "" {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			} else {
+				if err == nil {
+					t.Errorf("expected error %q, got nil", tt.wantErr)
+				} else if err.Error() != tt.wantErr {
+					t.Errorf("expected error %q, got %q", tt.wantErr, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestSendEachLine(t *testing.T) {
+	input := "line1\n\nline2\nline3\n"
+	var sent []string
+	sendOne := func(data []byte) error {
+		sent = append(sent, string(data))
+		return nil
+	}
+	if err := sendEachLine(strings.NewReader(input), sendOne); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expected := []string{"line1", "line2", "line3"}
+	if len(sent) != len(expected) {
+		t.Fatalf("expected %d messages, got %d", len(expected), len(sent))
+	}
+	for i, s := range sent {
+		if s != expected[i] {
+			t.Errorf("message[%d] = %q, want %q", i, s, expected[i])
+		}
+	}
+}
+
+func TestSendEachJSON(t *testing.T) {
+	input := `{"key":"value1"} {"key":"value2"}` + "\n" + `[1,2,3]`
+	var sent []string
+	sendOne := func(data []byte) error {
+		sent = append(sent, string(data))
+		return nil
+	}
+	if err := sendEachJSON(strings.NewReader(input), sendOne); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	expected := []string{`{"key":"value1"}`, `{"key":"value2"}`, `[1,2,3]`}
+	if len(sent) != len(expected) {
+		t.Fatalf("expected %d messages, got %d: %v", len(expected), len(sent), sent)
+	}
+	for i, s := range sent {
+		if s != expected[i] {
+			t.Errorf("message[%d] = %q, want %q", i, s, expected[i])
+		}
+	}
+}
+
 func TestReadInput(t *testing.T) {
 	tests := []struct {
 		name     string

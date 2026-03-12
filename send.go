@@ -1,19 +1,42 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
 
 	simplemq "github.com/sacloud/simplemq-api-go"
 )
 
 type SendMessageCommand struct {
-	Content string `arg:"" help:"Content of the message to send. if - read from stdin" name:"content"`
+	Content  string `arg:"" optional:"" help:"Content of the message to send. if - read from stdin" name:"content"`
+	Stdin    bool   `help:"Read message content from stdin" default:"false"`
+	EachLine bool   `help:"Send each line from stdin as a separate message (requires --stdin)" default:"false" name:"each-line"`
+	EachJSON bool   `help:"Send each JSON value from stdin as a separate message (requires --stdin)" default:"false" name:"each-json"`
+}
+
+func (cmd *SendMessageCommand) Validate() error {
+	if cmd.EachLine && !cmd.Stdin {
+		return fmt.Errorf("--each-line requires --stdin")
+	}
+	if cmd.EachJSON && !cmd.Stdin {
+		return fmt.Errorf("--each-json requires --stdin")
+	}
+	if cmd.EachLine && cmd.EachJSON {
+		return fmt.Errorf("--each-line and --each-json are mutually exclusive")
+	}
+	if !cmd.Stdin && cmd.Content == "" {
+		return fmt.Errorf("<content> argument or --stdin is required")
+	}
+	if cmd.Stdin && cmd.Content != "" {
+		return fmt.Errorf("--stdin and <content> argument are mutually exclusive")
+	}
+	return nil
 }
 
 func runSendMessageCommand(ctx context.Context, c *CLI) error {
@@ -26,28 +49,64 @@ func runSendMessageCommand(ctx context.Context, c *CLI) error {
 	}
 	messageOp := simplemq.NewMessageOp(client, c.Message.QueueName)
 
-	var rawContent []byte
-	if cmd.Content == "-" { // read from stdin
-		rawContent, err = readInput(os.Stdin)
+	sendOne := func(rawContent []byte) error {
+		var content string
+		if c.Message.Raw {
+			content = string(rawContent)
+		} else {
+			content = base64.StdEncoding.EncodeToString(rawContent)
+		}
+		logger.Debug("sending message", "content", content)
+		res, err := messageOp.Send(ctx, content)
+		if err != nil {
+			return fmt.Errorf("failed to send message: %w", err)
+		}
+		logger.Debug("message sent successfully", "messageID", res.ID)
+		return nil
+	}
+
+	r := c.stdinReader()
+	switch {
+	case cmd.EachLine:
+		return sendEachLine(r, sendOne)
+	case cmd.EachJSON:
+		return sendEachJSON(r, sendOne)
+	case cmd.Stdin || cmd.Content == "-":
+		rawContent, err := readInput(r)
 		if err != nil {
 			return fmt.Errorf("failed to read from stdin: %w", err)
 		}
-	} else {
-		rawContent = []byte(cmd.Content)
+		return sendOne(rawContent)
+	default:
+		return sendOne([]byte(cmd.Content))
 	}
-	var content string
-	if c.Message.Raw {
-		content = string(rawContent)
-	} else {
-		// automatic base64 encode
-		content = base64.StdEncoding.EncodeToString(rawContent)
+}
+
+func sendEachLine(r io.Reader, sendOne func([]byte) error) error {
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+		if err := sendOne(line); err != nil {
+			return err
+		}
 	}
-	logger.Debug("sending message", "content", content)
-	res, err := messageOp.Send(ctx, content)
-	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
+	return scanner.Err()
+}
+
+func sendEachJSON(r io.Reader, sendOne func([]byte) error) error {
+	dec := json.NewDecoder(r)
+	for dec.More() {
+		var raw json.RawMessage
+		if err := dec.Decode(&raw); err != nil {
+			return fmt.Errorf("failed to decode JSON: %w", err)
+		}
+		if err := sendOne(raw); err != nil {
+			return err
+		}
 	}
-	logger.Debug("message sent successfully", "messageID", res.ID)
 	return nil
 }
 
