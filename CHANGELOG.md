@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.8.0](https://github.com/fujiwara/simplemq-cli/compare/v0.7.1...v0.8.0) - 2026-03-12
+- Add --stdin, --each-line, --each-json options to message send by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/56
+
 ## [v0.7.1](https://github.com/fujiwara/simplemq-cli/compare/v0.7.0...v0.7.1) - 2026-03-09
 - Update simplemq-api-go to v0.5.0 by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/54
 
