@@ -32,7 +32,7 @@ func Run(ctx context.Context) error {
 	})))
 
 	switch kx.Command() {
-	case "message send <content>":
+	case "message send <content>", "message send":
 		return runSendMessageCommand(ctx, &c)
 	case "message receive":
 		return runReceiveMessageCommand(ctx, &c)

@@ -62,7 +62,17 @@ Commands:
 ### Send a message
 
 ```bash
+# Send a message with content argument
 simplemq-cli message send --queue myqueue --api-key <api-key> "Hello, World!"
+
+# Send a message from stdin
+echo "Hello, World!" | simplemq-cli message send --queue myqueue --api-key <api-key> --stdin
+
+# Send each line from stdin as a separate message
+printf "msg1\nmsg2\nmsg3" | simplemq-cli message send --queue myqueue --api-key <api-key> --stdin --each-line
+
+# Send each JSON value from stdin as a separate message
+echo '{"a":1} {"b":2}' | simplemq-cli message send --queue myqueue --api-key <api-key> --stdin --each-json
 ```
 
 ### Receive messages
@@ -182,6 +192,14 @@ simplemq-cli queue purge --queue myqueue -f
 | `--queue` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required) |
 | `--api-key` | `SIMPLEMQ_API_KEY` | API Key (required) |
 | `--raw` | `SIMPLEMQ_RAW` | Handle raw message without Base64 encoding/decoding (default: false) |
+
+### Send Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--stdin` | false | Read message content from stdin |
+| `--each-line` | false | Send each line from stdin as a separate message (requires `--stdin`) |
+| `--each-json` | false | Send each JSON value from stdin as a separate message (requires `--stdin`) |
 
 ### Receive Options
 
