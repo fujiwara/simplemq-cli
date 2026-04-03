@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -192,6 +194,126 @@ func TestMessageSendEachJSON(t *testing.T) {
 	}
 
 	// Receive 2 messages
+	var messages []Message
+	for i := 0; i < 2; i++ {
+		resetOutput(c)
+		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
+		if err := runReceiveMessageCommand(ctx, c); err != nil {
+			t.Fatalf("receive %d failed: %v", i, err)
+		}
+		output := strings.TrimSpace(outputString(c))
+		if output == "" {
+			t.Fatalf("expected message %d, got empty output", i)
+		}
+		var msg Message
+		if err := json.Unmarshal([]byte(output), &msg); err != nil {
+			t.Fatalf("failed to unmarshal message %d: %v", i, err)
+		}
+		messages = append(messages, msg)
+	}
+	if messages[0].Content != `{"a":1}` {
+		t.Errorf("message[0] content = %q, want %q", messages[0].Content, `{"a":1}`)
+	}
+	if messages[1].Content != `{"b":2}` {
+		t.Errorf("message[1] content = %q, want %q", messages[1].Content, `{"b":2}`)
+	}
+}
+
+func TestMessageSendFile(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	// Create a temporary file
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "message.txt")
+	if err := os.WriteFile(filePath, []byte("hello from file"), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	c := newTestCLI(srv.TestURL(), "test-file")
+	c.Message.Send = &SendMessageCommand{File: filePath}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
+	c.Message.Receive = &ReceiveMessageCommand{Count: 1}
+	if err := runReceiveMessageCommand(ctx, c); err != nil {
+		t.Fatalf("receive failed: %v", err)
+	}
+
+	output := outputString(c)
+	var msg Message
+	if err := json.Unmarshal([]byte(strings.TrimSpace(output)), &msg); err != nil {
+		t.Fatalf("failed to unmarshal output: %v\noutput: %s", err, output)
+	}
+	if msg.Content != "hello from file" {
+		t.Errorf("expected content 'hello from file', got %q", msg.Content)
+	}
+}
+
+func TestMessageSendFileEachLine(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "lines.txt")
+	if err := os.WriteFile(filePath, []byte("line1\nline2\nline3\n"), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	c := newTestCLI(srv.TestURL(), "test-file-each-line")
+	c.Message.Send = &SendMessageCommand{File: filePath, EachLine: true}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
+	var messages []Message
+	for i := 0; i < 3; i++ {
+		resetOutput(c)
+		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
+		if err := runReceiveMessageCommand(ctx, c); err != nil {
+			t.Fatalf("receive %d failed: %v", i, err)
+		}
+		output := strings.TrimSpace(outputString(c))
+		if output == "" {
+			t.Fatalf("expected message %d, got empty output", i)
+		}
+		var msg Message
+		if err := json.Unmarshal([]byte(output), &msg); err != nil {
+			t.Fatalf("failed to unmarshal message %d: %v", i, err)
+		}
+		messages = append(messages, msg)
+	}
+	expected := []string{"line1", "line2", "line3"}
+	for i, msg := range messages {
+		if msg.Content != expected[i] {
+			t.Errorf("message[%d] content = %q, want %q", i, msg.Content, expected[i])
+		}
+	}
+}
+
+func TestMessageSendFileEachJSON(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{})
+	defer srv.Close()
+	ctx := t.Context()
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "data.json")
+	if err := os.WriteFile(filePath, []byte(`{"a":1} {"b":2}`), 0644); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
+
+	c := newTestCLI(srv.TestURL(), "test-file-each-json")
+	c.Message.Send = &SendMessageCommand{File: filePath, EachJSON: true}
+
+	if err := runSendMessageCommand(ctx, c); err != nil {
+		t.Fatalf("send failed: %v", err)
+	}
+
 	var messages []Message
 	for i := 0; i < 2; i++ {
 		resetOutput(c)

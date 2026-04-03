@@ -73,6 +73,15 @@ printf "msg1\nmsg2\nmsg3" | simplemq-cli message send --queue myqueue --api-key 
 
 # Send each JSON value from stdin as a separate message
 echo '{"a":1} {"b":2}' | simplemq-cli message send --queue myqueue --api-key <api-key> --stdin --each-json
+
+# Send a message from a file
+simplemq-cli message send --queue myqueue --api-key <api-key> --file message.txt
+
+# Send each line from a file as a separate message
+simplemq-cli message send --queue myqueue --api-key <api-key> --file messages.txt --each-line
+
+# Send each JSON value from a file as a separate message
+simplemq-cli message send --queue myqueue --api-key <api-key> --file data.json --each-json
 ```
 
 ### Receive messages
@@ -198,8 +207,9 @@ simplemq-cli queue purge --queue myqueue -f
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--stdin` | false | Read message content from stdin |
-| `--each-line` | false | Send each line from stdin as a separate message (requires `--stdin`) |
-| `--each-json` | false | Send each JSON value from stdin as a separate message (requires `--stdin`) |
+| `--file` | | Read message content from a file |
+| `--each-line` | false | Send each line as a separate message (requires `--stdin` or `--file`) |
+| `--each-json` | false | Send each JSON value as a separate message (requires `--stdin` or `--file`) |
 
 ### Receive Options
 

@@ -34,24 +34,44 @@ func TestSendMessageCommandValidate(t *testing.T) {
 			wantErr: "",
 		},
 		{
-			name:    "no content no stdin",
+			name:    "file only",
+			cmd:     SendMessageCommand{File: "test.txt"},
+			wantErr: "",
+		},
+		{
+			name:    "file with each-line",
+			cmd:     SendMessageCommand{File: "test.txt", EachLine: true},
+			wantErr: "",
+		},
+		{
+			name:    "file with each-json",
+			cmd:     SendMessageCommand{File: "test.txt", EachJSON: true},
+			wantErr: "",
+		},
+		{
+			name:    "no content no stdin no file",
 			cmd:     SendMessageCommand{},
-			wantErr: "<content> argument or --stdin is required",
+			wantErr: "<content> argument, --stdin, or --file is required",
 		},
 		{
 			name:    "stdin and content",
 			cmd:     SendMessageCommand{Stdin: true, Content: "hello"},
-			wantErr: "--stdin and <content> argument are mutually exclusive",
+			wantErr: "--stdin/--file and <content> argument are mutually exclusive",
 		},
 		{
-			name:    "each-line without stdin",
+			name:    "file and content",
+			cmd:     SendMessageCommand{File: "test.txt", Content: "hello"},
+			wantErr: "--stdin/--file and <content> argument are mutually exclusive",
+		},
+		{
+			name:    "each-line without stdin or file",
 			cmd:     SendMessageCommand{EachLine: true, Content: "hello"},
-			wantErr: "--each-line requires --stdin",
+			wantErr: "--each-line requires --stdin or --file",
 		},
 		{
-			name:    "each-json without stdin",
+			name:    "each-json without stdin or file",
 			cmd:     SendMessageCommand{EachJSON: true, Content: "hello"},
-			wantErr: "--each-json requires --stdin",
+			wantErr: "--each-json requires --stdin or --file",
 		},
 		{
 			name:    "each-line and each-json",
