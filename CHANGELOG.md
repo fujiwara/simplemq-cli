@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.9.1](https://github.com/fujiwara/simplemq-cli/compare/v0.9.0...v0.9.1) - 2026-04-03
+- Add --timeout option and localserver --latency option by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/64
+
 ## [v0.9.0](https://github.com/fujiwara/simplemq-cli/compare/v0.8.0...v0.9.0) - 2026-04-03
 - Add --file option to message send command by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/62
 - Bump github.com/sacloud/saclient-go from 0.3.1 to 0.3.5 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/61
