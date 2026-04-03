@@ -13,6 +13,7 @@ type Config struct {
 	VisibilityTimeout time.Duration `help:"Visibility timeout" default:"30s" env:"SIMPLEMQ_VISIBILITY_TIMEOUT"`
 	MessageExpire     time.Duration `help:"Message expire time" default:"96h" env:"SIMPLEMQ_MESSAGE_EXPIRE"`
 	Database          string        `help:"SQLite database path for persistent storage" env:"SIMPLEMQ_DATABASE"`
+	Latency           time.Duration `help:"Artificial latency added to every response" env:"SIMPLEMQ_LATENCY"`
 	Debug             bool          `help:"Enable debug mode" env:"SIMPLEMQ_DEBUG" default:"false"`
 }
 
@@ -22,6 +23,7 @@ type Server struct {
 	mux        *http.ServeMux
 	store      Store
 	apiKey     string
+	latency    time.Duration
 }
 
 // NewHandler creates a Server as an http.Handler without starting a listener.
@@ -32,8 +34,9 @@ func NewHandler(cfg Config) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		store:  store,
-		apiKey: cfg.APIKey,
+		store:   store,
+		apiKey:  cfg.APIKey,
+		latency: cfg.Latency,
 	}
 	s.mux = s.buildMux()
 	return s, nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/alecthomas/kong"
 )
@@ -11,6 +12,7 @@ import (
 type CLI struct {
 	Version kong.VersionFlag `short:"v" help:"Show version and exit."`
 	Debug   bool             `help:"Enable debug mode." env:"SIMPLEMQ_DEBUG" default:"false"`
+	Timeout time.Duration    `help:"Timeout for API requests (e.g. 30s, 1m)." env:"SIMPLEMQ_TIMEOUT"`
 
 	Message *MessageCommand `cmd:"" help:"Message related commands"`
 	Queue   *QueueCommand   `cmd:"" help:"Queue related commands"`

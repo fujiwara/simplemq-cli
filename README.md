@@ -23,6 +23,7 @@ Flags:
   -h, --help       Show context-sensitive help.
   -v, --version    Show version and exit.
       --debug      Enable debug mode ($SIMPLEMQ_DEBUG).
+      --timeout    Timeout for API requests (e.g. 30s, 1m) ($SIMPLEMQ_TIMEOUT).
 
 Commands:
   message send --queue=STRING --api-key=STRING <content> [flags]
@@ -286,6 +287,7 @@ simplemq-localserver
 | `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
 | `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
 | `--database` | `SIMPLEMQ_DATABASE` | (empty) | SQLite database path for persistent storage |
+| `--latency` | `SIMPLEMQ_LATENCY` | `0` | Artificial latency added to every response (e.g. `500ms`, `2s`) |
 | `--debug` | `SIMPLEMQ_DEBUG` | `false` | Enable debug mode (detailed request logging) |
 
 ```bash
@@ -303,6 +305,9 @@ simplemq-localserver --debug
 
 # Use SQLite for persistent storage
 simplemq-localserver --database ./messages.db
+
+# Add 500ms latency to every response (useful for timeout testing)
+simplemq-localserver --latency 500ms
 ```
 
 If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
