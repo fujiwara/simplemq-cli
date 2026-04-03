@@ -9,32 +9,38 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 
 	simplemq "github.com/sacloud/simplemq-api-go"
 )
 
 type SendMessageCommand struct {
 	Content  string `arg:"" optional:"" help:"Content of the message to send. if - read from stdin" name:"content"`
-	Stdin    bool   `help:"Read message content from stdin" default:"false"`
-	EachLine bool   `help:"Send each line from stdin as a separate message (requires --stdin)" default:"false" name:"each-line"`
-	EachJSON bool   `help:"Send each JSON value from stdin as a separate message (requires --stdin)" default:"false" name:"each-json"`
+	Stdin    bool   `help:"Read message content from stdin" xor:"input"`
+	File     string `help:"Read message content from a file" name:"file" type:"existingfile" xor:"input"`
+	EachLine bool   `help:"Send each line as a separate message (requires --stdin or --file)" default:"false" name:"each-line"`
+	EachJSON bool   `help:"Send each JSON value as a separate message (requires --stdin or --file)" default:"false" name:"each-json"`
+}
+
+func (cmd *SendMessageCommand) hasInput() bool {
+	return cmd.Stdin || cmd.File != ""
 }
 
 func (cmd *SendMessageCommand) Validate() error {
-	if cmd.EachLine && !cmd.Stdin {
-		return fmt.Errorf("--each-line requires --stdin")
+	if cmd.EachLine && !cmd.hasInput() {
+		return fmt.Errorf("--each-line requires --stdin or --file")
 	}
-	if cmd.EachJSON && !cmd.Stdin {
-		return fmt.Errorf("--each-json requires --stdin")
+	if cmd.EachJSON && !cmd.hasInput() {
+		return fmt.Errorf("--each-json requires --stdin or --file")
 	}
 	if cmd.EachLine && cmd.EachJSON {
 		return fmt.Errorf("--each-line and --each-json are mutually exclusive")
 	}
-	if !cmd.Stdin && cmd.Content == "" {
-		return fmt.Errorf("<content> argument or --stdin is required")
+	if !cmd.hasInput() && cmd.Content == "" {
+		return fmt.Errorf("<content> argument, --stdin, or --file is required")
 	}
-	if cmd.Stdin && cmd.Content != "" {
-		return fmt.Errorf("--stdin and <content> argument are mutually exclusive")
+	if cmd.hasInput() && cmd.Content != "" {
+		return fmt.Errorf("--stdin/--file and <content> argument are mutually exclusive")
 	}
 	return nil
 }
@@ -65,16 +71,27 @@ func runSendMessageCommand(ctx context.Context, c *CLI) error {
 		return nil
 	}
 
-	r := c.stdinReader()
+	var r io.Reader
+	if cmd.File != "" {
+		f, err := os.Open(cmd.File)
+		if err != nil {
+			return fmt.Errorf("failed to open file %s: %w", cmd.File, err)
+		}
+		defer f.Close()
+		r = f
+	} else {
+		r = c.stdinReader()
+	}
+
 	switch {
 	case cmd.EachLine:
 		return sendEachLine(r, sendOne)
 	case cmd.EachJSON:
 		return sendEachJSON(r, sendOne)
-	case cmd.Stdin || cmd.Content == "-":
+	case cmd.Stdin || cmd.File != "" || cmd.Content == "-":
 		rawContent, err := readInput(r)
 		if err != nil {
-			return fmt.Errorf("failed to read from stdin: %w", err)
+			return fmt.Errorf("failed to read input: %w", err)
 		}
 		return sendOne(rawContent)
 	default:
