@@ -16,7 +16,7 @@ import (
 
 type SendMessageCommand struct {
 	Content  string `arg:"" optional:"" help:"Content of the message to send. if - read from stdin" name:"content"`
-	Stdin    bool   `help:"Read message content from stdin" default:"false" xor:"input"`
+	Stdin    bool   `help:"Read message content from stdin" xor:"input"`
 	File     string `help:"Read message content from a file" name:"file" type:"existingfile" xor:"input"`
 	EachLine bool   `help:"Send each line as a separate message (requires --stdin or --file)" default:"false" name:"each-line"`
 	EachJSON bool   `help:"Send each JSON value as a separate message (requires --stdin or --file)" default:"false" name:"each-json"`
