@@ -56,6 +56,7 @@ func run(ctx context.Context) error {
 		"visibility_timeout", cfg.VisibilityTimeout,
 		"message_expire", cfg.MessageExpire,
 		"database", databaseHint(cfg.Database),
+		"latency", cfg.Latency,
 		"debug", cfg.Debug,
 	)
 	slog.Info("to use with simplemq-cli",

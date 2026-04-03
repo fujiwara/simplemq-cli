@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -31,30 +32,46 @@ func Run(ctx context.Context) error {
 		Color:          true,
 	})))
 
+	if c.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, c.Timeout)
+		defer cancel()
+	}
+
+	var cmdErr error
 	switch kx.Command() {
 	case "message send <content>", "message send":
-		return runSendMessageCommand(ctx, &c)
+		cmdErr = runSendMessageCommand(ctx, &c)
 	case "message receive":
-		return runReceiveMessageCommand(ctx, &c)
+		cmdErr = runReceiveMessageCommand(ctx, &c)
 	case "message delete <message-id>":
-		return runDeleteMessageCommand(ctx, &c)
+		cmdErr = runDeleteMessageCommand(ctx, &c)
 	case "queue create":
-		return runCreateQueueCommand(ctx, &c)
+		cmdErr = runCreateQueueCommand(ctx, &c)
 	case "queue get":
-		return runGetQueueCommand(ctx, &c)
+		cmdErr = runGetQueueCommand(ctx, &c)
 	case "queue list":
-		return runListQueueCommand(ctx, &c)
+		cmdErr = runListQueueCommand(ctx, &c)
 	case "queue modify":
-		return runModifyQueueCommand(ctx, &c)
+		cmdErr = runModifyQueueCommand(ctx, &c)
 	case "queue delete":
-		return runDeleteQueueCommand(ctx, &c)
+		cmdErr = runDeleteQueueCommand(ctx, &c)
 	case "queue purge":
-		return runPurgeQueueCommand(ctx, &c)
+		cmdErr = runPurgeQueueCommand(ctx, &c)
 	case "queue rotate-api-key":
-		return runRotateQueueAPIKeyCommand(ctx, &c)
+		cmdErr = runRotateQueueAPIKeyCommand(ctx, &c)
 	case "queue message-count":
-		return runMessageCountCommand(ctx, &c)
+		cmdErr = runMessageCountCommand(ctx, &c)
 	default:
 		return fmt.Errorf("unknown command: %s", kx.Command())
 	}
+	if cmdErr != nil {
+		if ctx.Err() != nil && errors.Is(cmdErr, context.DeadlineExceeded) {
+			return fmt.Errorf("request timed out (--timeout %s): %w", c.Timeout, cmdErr)
+		}
+		if ctx.Err() != nil && errors.Is(cmdErr, context.Canceled) {
+			return fmt.Errorf("request canceled: %w", cmdErr)
+		}
+	}
+	return cmdErr
 }

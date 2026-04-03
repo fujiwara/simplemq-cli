@@ -2,11 +2,13 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/fujiwara/simplemq-cli/localserver"
 )
@@ -376,4 +378,37 @@ func TestMessageReceiveAutoDelete(t *testing.T) {
 	if strings.TrimSpace(outputString(c)) != "" {
 		t.Errorf("expected empty output after auto-delete, got %q", outputString(c))
 	}
+}
+
+func TestTimeout(t *testing.T) {
+	srv := localserver.NewTestServer(localserver.Config{Latency: 500 * time.Millisecond})
+	defer srv.Close()
+
+	t.Run("timeout exceeded", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+		defer cancel()
+
+		c := newTestCLI(srv.TestURL(), "test-timeout")
+		c.Message.Send = &SendMessageCommand{Content: "should timeout"}
+
+		err := runSendMessageCommand(ctx, c)
+		if err == nil {
+			t.Fatal("expected timeout error, got nil")
+		}
+		if !strings.Contains(err.Error(), "context deadline exceeded") {
+			t.Errorf("expected context deadline exceeded error, got: %v", err)
+		}
+	})
+
+	t.Run("within timeout", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel()
+
+		c := newTestCLI(srv.TestURL(), "test-timeout")
+		c.Message.Send = &SendMessageCommand{Content: "should succeed"}
+
+		if err := runSendMessageCommand(ctx, c); err != nil {
+			t.Fatalf("expected no error, got: %v", err)
+		}
+	})
 }
