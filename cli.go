@@ -32,7 +32,7 @@ type MessageCommand struct {
 	QueueName string `name:"queue" help:"Queue name" short:"q" required:"" env:"SIMPLEMQ_QUEUE_NAME"`
 
 	APIKey        string `help:"API Key" required:"" env:"SIMPLEMQ_API_KEY"`
-	MessageAPIURL string `help:"Message API URL" env:"SIMPLEMQ_MESSAGE_API_URL"`
+	MessageAPIURL string `help:"Message API URL (deprecated: use SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE instead)" env:"SIMPLEMQ_MESSAGE_API_URL"`
 	Raw           bool   `help:"Handle raw message without Base64 encoding/decoding" default:"false" env:"SIMPLEMQ_RAW"`
 
 	Send    *SendMessageCommand    `cmd:"" help:"Send message to queue"`

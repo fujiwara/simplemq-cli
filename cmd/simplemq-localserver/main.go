@@ -60,7 +60,7 @@ func run(ctx context.Context) error {
 		"debug", cfg.Debug,
 	)
 	slog.Info("to use with simplemq-cli",
-		"SIMPLEMQ_MESSAGE_API_URL", "http://"+cfg.Addr,
+		"SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE", "http://"+cfg.Addr,
 		"SIMPLEMQ_API_KEY", apiKeyHint(cfg.APIKey),
 	)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {

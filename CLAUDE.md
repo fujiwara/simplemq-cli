@@ -71,3 +71,8 @@ Configuration can be via flags or environment variables (SIMPLEMQ_QUEUE_NAME, SI
 - Place documentation sections near the feature they describe (e.g. message format near message commands, not after unrelated queue management).
 - Don't add empty sections with no useful content.
 - When adding a new feature, review existing descriptions to ensure they remain accurate (e.g. "in-memory only" becomes inaccurate after adding SQLite support).
+
+## TODO
+
+### v1
+- Remove `SIMPLEMQ_MESSAGE_API_URL` environment variable and `--message-api-url` flag (`MessageAPIURL` in `cli.go`). Use `SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE` (handled by `saclient-go`) instead.
