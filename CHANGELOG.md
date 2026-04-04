@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.9.2](https://github.com/fujiwara/simplemq-cli/compare/v0.9.1...v0.9.2) - 2026-04-04
+- Recommend SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE over SIMPLEMQ_MESSAGE_API_URL by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/66
+
 ## [v0.9.1](https://github.com/fujiwara/simplemq-cli/compare/v0.9.0...v0.9.1) - 2026-04-03
 - Add --timeout option and localserver --latency option by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/64
 
