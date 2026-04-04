@@ -201,6 +201,7 @@ simplemq-cli queue purge --queue myqueue -f
 |--------|---------------------|-------------|
 | `--queue` | `SIMPLEMQ_QUEUE_NAME` | Queue name (required) |
 | `--api-key` | `SIMPLEMQ_API_KEY` | API Key (required) |
+| | `SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE` | Message API endpoint URL (provided by `saclient-go`) |
 | `--raw` | `SIMPLEMQ_RAW` | Handle raw message without Base64 encoding/decoding (default: false) |
 
 ### Send Options
@@ -315,7 +316,7 @@ If `--api-key` is not specified, any non-empty Bearer token is accepted (default
 ### Use with simplemq-cli
 
 ```bash
-export SIMPLEMQ_MESSAGE_API_URL=http://localhost:18080
+export SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE=http://localhost:18080
 export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted (or the specific key if -api-key was set)
 
 # Send a message
