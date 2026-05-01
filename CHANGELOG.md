@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.9.3](https://github.com/fujiwara/simplemq-cli/compare/v0.9.2...v0.9.3) - 2026-05-01
+- Migrate localserver to sacloud/sakumock/simplemq by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/75
+- Bump Songmu/tagpr from 1.17.1 to 1.18.3 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/68
+- Bump dependencies (consolidated dependabot updates) by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/77
+- Check out before setup-go to fix cache warning by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/78
+
 ## [v0.9.2](https://github.com/fujiwara/simplemq-cli/compare/v0.9.1...v0.9.2) - 2026-04-04
 - Recommend SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE over SIMPLEMQ_MESSAGE_API_URL by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/66
 
