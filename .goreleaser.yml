@@ -15,18 +15,6 @@ builds:
     goarch:
       - amd64
       - arm64
-  - id: simplemq-localserver
-    env:
-      - CGO_ENABLED=0
-    main: ./cmd/simplemq-localserver/
-    binary: simplemq-localserver
-    goos:
-      - linux
-      - darwin
-      - windows
-    goarch:
-      - amd64
-      - arm64
 release:
   use_existing_draft: true
 checksum:
@@ -36,10 +24,6 @@ archives:
     ids:
       - simplemq-cli
     name_template: "simplemq-cli_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  - id: simplemq-localserver
-    ids:
-      - simplemq-localserver
-    name_template: "simplemq-localserver_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
 snapshot:
   version_template: "{{ .Tag }}-next"
 changelog:
