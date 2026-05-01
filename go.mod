@@ -6,9 +6,9 @@ require (
 	github.com/Songmu/prompter v0.5.1
 	github.com/alecthomas/kong v1.15.0
 	github.com/fujiwara/sloghandler v0.1.0
-	github.com/sacloud/saclient-go v0.3.5
+	github.com/sacloud/saclient-go v0.3.6
 	github.com/sacloud/sakumock/simplemq v0.0.2
-	github.com/sacloud/simplemq-api-go v0.5.0
+	github.com/sacloud/simplemq-api-go v0.5.1
 	golang.org/x/sys v0.42.0
 )
 
