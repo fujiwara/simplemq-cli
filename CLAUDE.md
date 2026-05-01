@@ -49,9 +49,7 @@ Configuration can be via flags or environment variables (SIMPLEMQ_QUEUE_NAME, SI
 
 ## Local Server
 
-- `cmd/simplemq-localserver/` - SimpleMQ-compatible local server for development/testing
-- `localserver/` - Server implementation with pluggable Store interface (MemoryStore / SQLiteStore)
-- SQLiteStore uses `modernc.org/sqlite` (pure Go, no CGO required). No build tags needed.
+For local development and tests, use the external [sakumock/simplemq](https://github.com/sacloud/sakumock/tree/main/simplemq) mock server (formerly vendored as `cmd/simplemq-localserver` / `localserver/`, moved to `github.com/sacloud/sakumock/simplemq`). Tests in `message_test.go` import `github.com/sacloud/sakumock/simplemq` and call `simplemq.NewTestServer` to spin up an in-process httptest server.
 
 ## Coding Guidelines
 

@@ -4,13 +4,12 @@ go 1.25.0
 
 require (
 	github.com/Songmu/prompter v0.5.1
-	github.com/alecthomas/kong v1.14.0
+	github.com/alecthomas/kong v1.15.0
 	github.com/fujiwara/sloghandler v0.1.0
-	github.com/google/uuid v1.6.0
 	github.com/sacloud/saclient-go v0.3.5
+	github.com/sacloud/sakumock/simplemq v0.0.2
 	github.com/sacloud/simplemq-api-go v0.5.0
 	golang.org/x/sys v0.42.0
-	modernc.org/sqlite v1.48.0
 )
 
 require (
@@ -24,6 +23,7 @@ require (
 	github.com/go-faster/yaml v0.4.6 // indirect
 	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -48,4 +48,5 @@ require (
 	modernc.org/libc v1.70.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
+	modernc.org/sqlite v1.48.1 // indirect
 )

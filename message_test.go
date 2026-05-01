@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fujiwara/simplemq-cli/localserver"
+	"github.com/sacloud/sakumock/simplemq"
 )
 
 func newTestCLI(serverURL, queueName string) *CLI {
@@ -33,7 +33,7 @@ func resetOutput(c *CLI) {
 }
 
 func TestMessageSendAndReceive(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -63,7 +63,7 @@ func TestMessageSendAndReceive(t *testing.T) {
 }
 
 func TestMessageReceiveEmpty(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -80,7 +80,7 @@ func TestMessageReceiveEmpty(t *testing.T) {
 }
 
 func TestMessageSendReceiveDelete(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -116,7 +116,7 @@ func TestMessageSendReceiveDelete(t *testing.T) {
 }
 
 func TestMessageSendStdin(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -144,7 +144,7 @@ func TestMessageSendStdin(t *testing.T) {
 }
 
 func TestMessageSendEachLine(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -158,7 +158,7 @@ func TestMessageSendEachLine(t *testing.T) {
 
 	// Receive all 3 messages
 	var messages []Message
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		resetOutput(c)
 		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
 		if err := runReceiveMessageCommand(ctx, c); err != nil {
@@ -183,7 +183,7 @@ func TestMessageSendEachLine(t *testing.T) {
 }
 
 func TestMessageSendEachJSON(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -197,7 +197,7 @@ func TestMessageSendEachJSON(t *testing.T) {
 
 	// Receive 2 messages
 	var messages []Message
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		resetOutput(c)
 		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
 		if err := runReceiveMessageCommand(ctx, c); err != nil {
@@ -222,7 +222,7 @@ func TestMessageSendEachJSON(t *testing.T) {
 }
 
 func TestMessageSendFile(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -256,7 +256,7 @@ func TestMessageSendFile(t *testing.T) {
 }
 
 func TestMessageSendFileEachLine(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -274,7 +274,7 @@ func TestMessageSendFileEachLine(t *testing.T) {
 	}
 
 	var messages []Message
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		resetOutput(c)
 		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
 		if err := runReceiveMessageCommand(ctx, c); err != nil {
@@ -299,7 +299,7 @@ func TestMessageSendFileEachLine(t *testing.T) {
 }
 
 func TestMessageSendFileEachJSON(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -317,7 +317,7 @@ func TestMessageSendFileEachJSON(t *testing.T) {
 	}
 
 	var messages []Message
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		resetOutput(c)
 		c.Message.Receive = &ReceiveMessageCommand{Count: 1, AutoDelete: true}
 		if err := runReceiveMessageCommand(ctx, c); err != nil {
@@ -342,7 +342,7 @@ func TestMessageSendFileEachJSON(t *testing.T) {
 }
 
 func TestMessageReceiveAutoDelete(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{})
+	srv := simplemq.NewTestServer(simplemq.Config{})
 	defer srv.Close()
 	ctx := t.Context()
 
@@ -381,7 +381,7 @@ func TestMessageReceiveAutoDelete(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	srv := localserver.NewTestServer(localserver.Config{Latency: 500 * time.Millisecond})
+	srv := simplemq.NewTestServer(simplemq.Config{Latency: 500 * time.Millisecond})
 	defer srv.Close()
 
 	t.Run("timeout exceeded", func(t *testing.T) {

@@ -261,7 +261,7 @@ The underlying SAKURA Cloud API client (`saclient-go`) enforces a rate limit of 
 
 For production use with the real SimpleMQ service, the default rate limit of 5 req/s is recommended to avoid `429 Too Many Requests` errors.
 
-When using `simplemq-localserver` for development, you can increase this limit for faster throughput:
+When using a local mock server for development, you can increase this limit for faster throughput:
 
 ```bash
 export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
@@ -269,66 +269,20 @@ export SAKURACLOUD_RATE_LIMIT=100  # 100 requests per second (10ms interval)
 
 ## Local Server for Development and Testing
 
-`simplemq-localserver` is an in-process SimpleMQ-compatible server for local development and testing. It implements the message API (send, receive, delete, extend timeout) with in-memory or SQLite-backed persistent storage.
-
-### Install and Start
+For local development and testing, use [sakumock-simplemq](https://github.com/sacloud/sakumock/tree/main/simplemq), a SimpleMQ-compatible mock server. Install and run it, then point `simplemq-cli` at it via `SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE`:
 
 ```bash
-go install github.com/fujiwara/simplemq-cli/cmd/simplemq-localserver@latest
-simplemq-localserver
-# simplemq-localserver listening on 127.0.0.1:18080
-```
+go install github.com/sacloud/sakumock/simplemq/cmd/sakumock-simplemq@latest
+sakumock-simplemq
 
-#### Options
-
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `--addr` | `SIMPLEMQ_LOCALSERVER_ADDR` | `127.0.0.1:18080` | Listen address |
-| `--api-key` | `SIMPLEMQ_API_KEY` | (empty) | API key for authentication (if empty, any key is accepted) |
-| `--visibility-timeout` | `SIMPLEMQ_VISIBILITY_TIMEOUT` | `30s` | Visibility timeout (duration) |
-| `--message-expire` | `SIMPLEMQ_MESSAGE_EXPIRE` | `96h` | Message expire time (duration, default: 4 days) |
-| `--database` | `SIMPLEMQ_DATABASE` | (empty) | SQLite database path for persistent storage |
-| `--latency` | `SIMPLEMQ_LATENCY` | `0` | Artificial latency added to every response (e.g. `500ms`, `2s`) |
-| `--debug` | `SIMPLEMQ_DEBUG` | `false` | Enable debug mode (detailed request logging) |
-
-```bash
-# Custom listen address
-simplemq-localserver --addr :9090
-
-# Require a specific API key
-simplemq-localserver --api-key my-secret-key
-
-# Custom visibility timeout (10 seconds) and message expiration (1 hour)
-simplemq-localserver --visibility-timeout 10s --message-expire 1h
-
-# Enable debug logging
-simplemq-localserver --debug
-
-# Use SQLite for persistent storage
-simplemq-localserver --database ./messages.db
-
-# Add 500ms latency to every response (useful for timeout testing)
-simplemq-localserver --latency 500ms
-```
-
-If `--api-key` is not specified, any non-empty Bearer token is accepted (default behavior).
-
-### Use with simplemq-cli
-
-```bash
 export SAKURA_ENDPOINTS_SIMPLE_MQ_MESSAGE=http://localhost:18080
-export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted (or the specific key if -api-key was set)
+export SIMPLEMQ_API_KEY=dummy  # any non-empty value is accepted by default
 
-# Send a message
-simplemq-cli message send --queue myqueue "Hello from localserver!"
-
-# Receive the message
+simplemq-cli message send --queue myqueue "Hello from sakumock!"
 simplemq-cli message receive --queue myqueue
 ```
 
-Queues are created automatically on first access. When using in-memory storage (default), all data is lost when the server stops. Use `--database` with SQLite for persistent storage.
-
-The server logs each request with method, path, status code, and masked authorization header. Use `--debug` for additional detail such as message IDs and queue operations.
+See the [sakumock-simplemq README](https://github.com/sacloud/sakumock/tree/main/simplemq) for available options (custom listen address, API key validation, SQLite-backed persistence, artificial latency, debug logging, etc.).
 
 ## License
 
