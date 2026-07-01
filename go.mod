@@ -9,7 +9,7 @@ require (
 	github.com/sacloud/saclient-go v0.3.7
 	github.com/sacloud/sakumock/simplemq v0.0.2
 	github.com/sacloud/simplemq-api-go v0.5.1
-	golang.org/x/sys v0.43.0
+	golang.org/x/sys v0.46.0
 )
 
 require (
