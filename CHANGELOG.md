@@ -1,5 +1,8 @@
 # Changelog
 
+## [v0.9.4](https://github.com/fujiwara/simplemq-cli/compare/v0.9.3...v0.9.4) - 2026-09-19
+- Rename CLAUDE.md to AGENTS.md by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/94
+
 ## [v0.9.3](https://github.com/fujiwara/simplemq-cli/compare/v0.9.2...v0.9.3) - 2026-05-01
 - Migrate localserver to sacloud/sakumock/simplemq by @fujiwara in https://github.com/fujiwara/simplemq-cli/pull/75
 - Bump Songmu/tagpr from 1.17.1 to 1.18.3 by @dependabot[bot] in https://github.com/fujiwara/simplemq-cli/pull/68
